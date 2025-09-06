@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yard Goats Baseball Field Manager</title>
+    <link rel="manifest" href="manifest.json"> <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1b3a6b 0%, #2d5a9b 50%, #4fb3b9 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '🐐';
+            position: absolute;
+            left: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 60px;
+            opacity: 0.2;
+        }
+        
+        .header::after {
+            content: '⚾';
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 60px;
+            opacity: 0.2;
+        }
+        
+        .league-name {
+            font-size: 1.2em;
+            color: #ffd700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            background: linear-gradient(45deg, #fff, #4fb3b9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .team-name {
+            font-size: 1.6em;
+            color: #4fb3b9;
+            font-weight: bold;
+            font-style: italic;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .game-controls {
+            background: linear-gradient(to right, #f5f5f5, #e8f4f5);
+            padding: 20px;
+            border-bottom: 3px solid #1b3a6b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .current-game-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .current-game-info label {
+            color: #1b3a6b;
+            font-weight: bold;
+        }
+        
+        .game-name-input {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #1b3a6b;
+            border-radius: 8px;
+            width: 250px;
+            background: white;
+        }
+        
+        .game-name-input:focus {
+            outline: none;
+            border-color: #4fb3b9;
+            box-shadow: 0 0 0 3px rgba(79, 179, 185, 0.2);
+        }
+        
+        .game-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #1b3a6b;
+            border: 2px solid #1b3a6b;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #1b3a6b;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27, 58, 107, 0.3);
+        }
+        
+        .control-btn.primary {
+            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            color: white;
+            border: none;
+        }
+        
+        .control-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(79, 179, 185, 0.4);
+        }
+        
+        .control-btn.danger {
+            border-color: #d9534f;
+            color: #d9534f;
+        }
+        
+        .control-btn.danger:hover {
+            background: #d9534f;
+            color: white;
+        }
+        
+        .save-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #666;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .save-status.saving {
+            border-color: #ffd700;
+            color: #b8860b;
+        }
+        
+        .save-status.saved {
+            border-color: #4fb3b9;
+            color: #1b3a6b;
+        }
+        
+        .save-status .status-icon {
+            font-size: 18px;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+            background: linear-gradient(to bottom, #fff, #f8fcfc);
+        }
+        
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header::before,
+            .header::after {
+                display: none;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+        
+        .field-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .inning-selector {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .inning-selector label {
+            font-weight: 600;
+            color: #1b3a6b;
+        }
+        
+        .inning-selector select {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 2px solid #1b3a6b;
+            border-radius: 8px;
+            background: white;
+            color: #1b3a6b;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .inning-selector select:hover {
+            border-color: #4fb3b9;
+            box-shadow: 0 2px 8px rgba(79, 179, 185, 0.3);
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        #fieldCanvas {
+            width: 100%;
+            height: auto;
+            border: 3px solid #1b3a6b;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(27, 58, 107, 0.2);
+            background: white;
+        }
+        
+        .table-section {
+            overflow-x: auto;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .table-header h2 {
+            color: #1b3a6b;
+            font-size: 1.8em;
+        }
+        
+        .add-player-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(27, 58, 107, 0.3);
+        }
+        
+        .add-player-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 179, 185, 0.4);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #1b3a6b 0%, #2d5a9b 100%);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        td {
+            background: white;
+        }
+        
+        .batting-order {
+            font-weight: bold;
+            color: #1b3a6b;
+            font-size: 18px;
+            width: 40px;
+            text-shadow: 1px 1px 2px rgba(79, 179, 185, 0.3);
+        }
+        
+        .player-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .player-name-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .player-name-input:focus {
+            outline: none;
+            border-color: #4fb3b9;
+            box-shadow: 0 0 0 3px rgba(79, 179, 185, 0.2);
+        }
+        
+        .position-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .position-select:focus {
+            outline: none;
+            border-color: #4fb3b9;
+            box-shadow: 0 0 0 3px rgba(79, 179, 185, 0.2);
+            background: #f0fffe;
+        }
+        
+        .position-select option[value="BN"] {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .row-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .move-btn, .delete-btn {
+            padding: 5px 8px;
+            background: #1b3a6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .move-btn:hover {
+            background: #4fb3b9;
+            transform: scale(1.1);
+        }
+        
+        .move-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .delete-btn {
+            background: #d9534f;
+        }
+        
+        .delete-btn:hover {
+            background: #c9302c;
+            transform: scale(1.1);
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: #4fb3b9;
+            font-size: 20px;
+            padding: 0 10px;
+            user-select: none;
+        }
+        
+        .drag-handle:hover {
+            color: #1b3a6b;
+        }
+        
+        tr.dragging {
+            opacity: 0.5;
+            background: #f0f0f0;
+        }
+        
+        tr.drag-over {
+            background: #e6f9fa;
+            border: 2px dashed #4fb3b9;
+        }
+        
+        tr:hover td {
+            background: #f8fcfc;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 2px solid #ffd700;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+        }
+        
+        .info-box strong {
+            color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(27, 58, 107, 0.7);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s;
+            border: 3px solid #1b3a6b;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .close-modal {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .close-modal:hover {
+            transform: scale(1.2);
+            color: #ffd700;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .saved-games-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .saved-game-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .saved-game-item:hover {
+            border-color: #4fb3b9;
+            background: linear-gradient(to right, #ffffff, #f0fffe);
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(79, 179, 185, 0.2);
+        }
+        
+        .saved-game-info h3 {
+            margin: 0 0 5px 0;
+            color: #1b3a6b;
+        }
+        
+        .saved-game-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .saved-game-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .load-btn, .delete-saved-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .load-btn {
+            background: #1b3a6b;
+            color: white;
+        }
+        
+        .load-btn:hover {
+            background: #4fb3b9;
+            transform: scale(1.05);
+        }
+        
+        .delete-saved-btn {
+            background: #d9534f;
+            color: white;
+        }
+        
+        .delete-saved-btn:hover {
+            background: #c9302c;
+            transform: scale(1.05);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #1b3a6b;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #1b3a6b;
+        }
+        
+        @media (max-width: 768px) {
+            .game-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .current-game-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .game-name-input {
+                width: 100%;
+            }
+            
+            .game-buttons {
+                justify-content: center;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 4px;
+            }
+            
+            .batting-order {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="league-name">SMYRNA LITTLE LEAGUE</div>
+            <h1>Yard Goats Field Manager</h1>
+            <div class="team-name">Hartford Yard Goats</div>
+            <p>Manage your team roster, batting order, and save game configurations!</p>
+        </div>
+        
+        <div class="game-controls">
+            <div class="current-game-info">
+                <label for="gameName">Game Name:</label>
+                <input type="text" id="gameName" class="game-name-input" placeholder="Enter game name..." value="Yard Goats Game 1">
+            </div>
+            <div class="game-buttons">
+                <button id="loadGameBtn" class="control-btn">📂 Load Game</button>
+                <button id="newGameBtn" class="control-btn danger">🔄 New Game</button>
+                <div class="save-status" id="saveStatus">
+                    <span class="status-icon">💾</span>
+                    <span class="status-text">All changes saved</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="field-section">
+                <div class="inning-selector">
+                    <label for="inningSelect">Select Inning:</label>
+                    <select id="inningSelect">
+                        <option value="1">1st Inning</option>
+                        <option value="2">2nd Inning</option>
+                        <option value="3">3rd Inning</option>
+                        <option value="4">4th Inning</option>
+                        <option value="5">5th Inning</option>
+                    </select>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="fieldCanvas"></canvas>
+                </div>
+                <div class="info-box">
+                    <p><strong>Position Abbreviations:</strong></p>
+                    <p>P: Pitcher | C: Catcher | 1B/2B/3B: Bases | SS: Shortstop</p>
+                    <p>LF/CF/RF: Outfield | BN: Bench</p>
+                    <p><strong>Tip:</strong> Auto-save is enabled - changes save automatically!</p>
+                </div>
+            </div>
+            
+            <div class="table-section">
+                <div class="table-header">
+                    <h2>🐐 Player Positions & Batting Order</h2>
+                    <button id="addPlayerBtn" class="add-player-btn">+ Add Player</button>
+                </div>
+                <table id="positionTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Order</th>
+                            <th style="width: 40px;"></th>
+                            <th>Player Name</th>
+                            <th>1st</th>
+                            <th>2nd</th>
+                            <th>3rd</th>
+                            <th>4th</th>
+                            <th>5th</th>
+                            <th style="width: 120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="savedGamesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📂 Saved Games</h2>
+                <button id="closeModalBtn" class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="savedGamesList" class="saved-games-list">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initial player data
+        let playerData = [
+            { name: "Atlas Pietrusza", positions: ["CF", "3B", "3B", "P", "BN"] },
+            { name: "Holden Lawder", positions: ["C", "C", "BN", "1B", "BN"] },
+            { name: "Rodney Covington", positions: ["SS", "P", "SS", "3B", "BN"] },
+            { name: "Cooper Corley", positions: ["1B", "SS", "P", "SS", "BN"] },
+            { name: "Alex Carpenter", positions: ["P", "1B", "CF", "CF", "BN"] },
+            { name: "Zion Mattox", positions: ["2B", "LF", "1B", "2B", "BN"] },
+            { name: "Hudson Beaard", positions: ["3B", "CF", "2B", "RF", "BN"] },
+            { name: "Olyvar Williams", positions: ["LF", "BN", "C", "C", "BN"] },
+            { name: "Ward Huovinen", positions: ["RF", "2B", "LF", "BN", "BN"] },
+            { name: "Aden Cobb", positions: ["BN", "RF", "RF", "LF", "BN"] },
+            { name: "Blake Thomas", positions: ["BN", "BN", "BN", "BN", "BN"] }
+        ];
+        
+        // Valid positions for dropdown
+        const validPositions = [
+            { value: "", label: "-- Select --" },
+            { value: "P", label: "P - Pitcher" },
+            { value: "C", label: "C - Catcher" },
+            { value: "1B", label: "1B - First Base" },
+            { value: "2B", label: "2B - Second Base" },
+            { value: "3B", label: "3B - Third Base" },
+            { value: "SS", label: "SS - Shortstop" },
+            { value: "LF", label: "LF - Left Field" },
+            { value: "CF", label: "CF - Center Field" },
+            { value: "RF", label: "RF - Right Field" },
+            { value: "BN", label: "BN - Bench" }
+        ];
+        
+        // Position coordinates on the field
+        const positionCoords = {
+            'P': { x: 0.5, y: 0.6 },
+            'C': { x: 0.5, y: 0.733 },
+            '1B': { x: 0.7, y: 0.5 },
+            '2B': { x: 0.617, y: 0.4 },
+            '3B': { x: 0.3, y: 0.5 },
+            'SS': { x: 0.383, y: 0.4 },
+            'LF': { x: 0.2, y: 0.2 },
+            'CF': { x: 0.5, y: 0.133 },
+            'RF': { x: 0.8, y: 0.2 }
+        };
+        
+        let draggedRow = null;
+        let autoSaveTimeout = null;
+        let canvasScale = 1;
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeEventListeners();
+            loadFromLocalStorage();
+            createTable();
+            setupCanvas();
+            updateField();
+        });
+        
+        // Setup all event listeners
+        function initializeEventListeners() {
+            // Game controls
+            document.getElementById('loadGameBtn').addEventListener('click', showSavedGames);
+            document.getElementById('newGameBtn').addEventListener('click', newGame);
+            document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
+            document.getElementById('closeModalBtn').addEventListener('click', closeSavedGames);
+            
+            // Inning selector
+            document.getElementById('inningSelect').addEventListener('change', updateField);
+            
+            // Game name input with auto-save
+            document.getElementById('gameName').addEventListener('input', triggerAutoSave);
+            
+            // Modal close on outside click
+            window.addEventListener('click', (event) => {
+                const modal = document.getElementById('savedGamesModal');
+                if (event.target === modal) {
+                    closeSavedGames();
+                }
+            });
+            
+            // Window resize for responsive canvas
+            window.addEventListener('resize', () => {
+                setupCanvas();
+                updateField();
+            });
+        }
+        
+        // Setup responsive canvas
+        function setupCanvas() {
+            const canvas = document.getElementById('fieldCanvas');
+            const container = document.querySelector('.canvas-container');
+            const containerWidth = container.offsetWidth;
+            
+            // Set canvas actual size (for drawing)
+            const size = Math.min(containerWidth, 600);
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Calculate scale for drawing
+            canvasScale = size / 600;
+        }
+        
+        // Auto-save functionality
+        function triggerAutoSave() {
+            // Clear existing timeout
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+            
+            // Update status to "saving"
+            updateSaveStatus('saving');
+            
+            // Set new timeout for auto-save
+            autoSaveTimeout = setTimeout(() => {
+                autoSaveGame();
+            }, 1000); // Save 1 second after user stops typing
+        }
+        
+        function autoSaveGame() {
+            const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            const gameData = {
+                name: gameName,
+                players: playerData,
+                savedAt: new Date().toISOString()
+            };
+            
+            // Save to localStorage with a special key for current game
+            try {
+                localStorage.setItem('currentGame', JSON.stringify(gameData));
+                updateSaveStatus('saved');
+            } catch(e) {
+                console.error('Unable to auto-save:', e);
+                updateSaveStatus('error');
+            }
+        }
+        
+        function updateSaveStatus(status) {
+            const saveStatus = document.getElementById('saveStatus');
+            const statusIcon = saveStatus.querySelector('.status-icon');
+            const statusText = saveStatus.querySelector('.status-text');
+            
+            switch(status) {
+                case 'saving':
+                    saveStatus.className = 'save-status saving';
+                    statusIcon.textContent = '⏳';
+                    statusText.textContent = 'Saving...';
+                    break;
+                case 'saved':
+                    saveStatus.className = 'save-status saved';
+                    statusIcon.textContent = '✓';
+                    statusText.textContent = 'All changes saved';
+                    break;
+                case 'error':
+                    saveStatus.className = 'save-status';
+                    statusIcon.textContent = '⚠️';
+                    statusText.textContent = 'Save failed';
+                    break;
+            }
+        }
+        
+        // Load from localStorage on startup
+        function loadFromLocalStorage() {
+            try {
+                const currentGame = localStorage.getItem('currentGame');
+                if (currentGame) {
+                    const gameData = JSON.parse(currentGame);
+                    playerData = gameData.players;
+                    document.getElementById('gameName').value = gameData.name;
+                }
+            } catch(e) {
+                console.error('Unable to load saved game:', e);
+            }
+        }
+        
+        // Game Management Functions
+        function showSavedGames() {
+            const modal = document.getElementById('savedGamesModal');
+            const savedGamesList = document.getElementById('savedGamesList');
+            let savedGames = [];
+            
+            try {
+                savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+            } catch(e) {
+                savedGames = [];
+            }
+            
+            savedGamesList.innerHTML = '';
+            
+            if (savedGames.length === 0) {
+                savedGamesList.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Saved Games</h3>
+                        <p>Games are automatically saved as you make changes!</p>
+                    </div>
+                `;
+            } else {
+                savedGames.forEach((game, index) => {
+                    const gameItem = document.createElement('div');
+                    gameItem.className = 'saved-game-item';
+                    
+                    const savedDate = new Date(game.savedAt);
+                    const dateStr = savedDate.toLocaleDateString() + ' ' + savedDate.toLocaleTimeString();
+                    
+                    gameItem.innerHTML = `
+                        <div class="saved-game-info">
+                            <h3>${game.name}</h3>
+                            <p>${game.players.length} players • Saved: ${dateStr}</p>
+                        </div>
+                        <div class="saved-game-actions">
+                            <button class="load-btn" data-index="${index}">Load</button>
+                            <button class="delete-saved-btn" data-index="${index}">Delete</button>
+                        </div>
+                    `;
+                    
+                    // Add event listeners to buttons
+                    gameItem.querySelector('.load-btn').addEventListener('click', (e) => {
+                        loadGame(parseInt(e.target.dataset.index));
+                    });
+                    
+                    gameItem.querySelector('.delete-saved-btn').addEventListener('click', (e) => {
+                        deleteSavedGame(parseInt(e.target.dataset.index));
+                    });
+                    
+                    savedGamesList.appendChild(gameItem);
+                });
+            }
+            
+            // Also add current game to saved games if it exists
+            const currentGame = localStorage.getItem('currentGame');
+            if (currentGame) {
+                const current = JSON.parse(currentGame);
+                // Check if it's not already in saved games
+                const exists = savedGames.some(game => game.name === current.name);
+                if (!exists) {
+                    savedGames.push(current);
+                    localStorage.setItem('baseballGames', JSON.stringify(savedGames));
+                }
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeSavedGames() {
+            document.getElementById('savedGamesModal').style.display = 'none';
+        }
+        
+        function loadGame(index) {
+            let savedGames = [];
+            try {
+                savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+            } catch(e) {
+                savedGames = [];
+            }
+            
+            if (savedGames[index]) {
+                const game = savedGames[index];
+                playerData = JSON.parse(JSON.stringify(game.players)); // Deep copy
+                document.getElementById('gameName').value = game.name;
+                createTable();
+                updateField();
+                closeSavedGames();
+                
+                // Save as current game
+                autoSaveGame();
+            }
+        }
+        
+        function deleteSavedGame(index) {
+            let savedGames = [];
+            try {
+                savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+            } catch(e) {
+                savedGames = [];
+            }
+            
+            const gameName = savedGames[index].name;
+            
+            if (confirm(`Are you sure you want to delete "${gameName}"?`)) {
+                savedGames.splice(index, 1);
+                localStorage.setItem('baseballGames', JSON.stringify(savedGames));
+                showSavedGames(); // Refresh the list
+            }
+        }
+        
+        function newGame() {
+            if (confirm('Start a new game? Any unsaved changes will be lost.')) {
+                playerData = [
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] },
+                    { name: "", positions: ["BN", "BN", "BN", "BN", "BN"] }
+                ];
+                document.getElementById('gameName').value = 'Yard Goats - New Game';
+                createTable();
+                updateField();
+                autoSaveGame();
+            }
+        }
+        
+        function createTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            playerData.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.draggable = true;
+                row.dataset.index = index;
+                
+                // Drag events
+                row.addEventListener('dragstart', handleDragStart);
+                row.addEventListener('dragend', handleDragEnd);
+                row.addEventListener('dragover', handleDragOver);
+                row.addEventListener('drop', handleDrop);
+                row.addEventListener('dragenter', handleDragEnter);
+                row.addEventListener('dragleave', handleDragLeave);
+                
+                // Batting order cell
+                const orderCell = document.createElement('td');
+                orderCell.className = 'batting-order';
+                orderCell.textContent = index + 1;
+                row.appendChild(orderCell);
+                
+                // Drag handle
+                const dragCell = document.createElement('td');
+                dragCell.innerHTML = '<span class="drag-handle">☰</span>';
+                row.appendChild(dragCell);
+                
+                // Player name cell
+                const nameCell = document.createElement('td');
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'player-name-cell';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'player-name-input';
+                nameInput.value = player.name;
+                nameInput.placeholder = 'Enter player name';
+                nameInput.addEventListener('input', (e) => {
+                    playerData[index].name = e.target.value;
+                    updateField();
+                    triggerAutoSave();
+                });
+                nameDiv.appendChild(nameInput);
+                nameCell.appendChild(nameDiv);
+                row.appendChild(nameCell);
+                
+                // Position cells with dropdowns
+                for (let i = 0; i < 5; i++) {
+                    const cell = document.createElement('td');
+                    const select = document.createElement('select');
+                    select.className = 'position-select';
+                    
+                    // Create options
+                    validPositions.forEach(pos => {
+                        const option = document.createElement('option');
+                        option.value = pos.value;
+                        option.textContent = pos.value || '--';
+                        if (pos.value === player.positions[i]) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                    
+                    select.addEventListener('change', (e) => {
+                        playerData[index].positions[i] = e.target.value;
+                        updateField();
+                        triggerAutoSave();
+                    });
+                    
+                    cell.appendChild(select);
+                    row.appendChild(cell);
+                }
+                
+                // Action buttons cell
+                const actionCell = document.createElement('td');
+                const controlDiv = document.createElement('div');
+                controlDiv.className = 'row-controls';
+                
+                const upBtn = document.createElement('button');
+                upBtn.className = 'move-btn';
+                upBtn.innerHTML = '↑';
+                upBtn.title = 'Move up in batting order';
+                upBtn.disabled = index === 0;
+                upBtn.addEventListener('click', () => movePlayer(index, -1));
+                
+                const downBtn = document.createElement('button');
+                downBtn.className = 'move-btn';
+                downBtn.innerHTML = '↓';
+                downBtn.title = 'Move down in batting order';
+                downBtn.disabled = index === playerData.length - 1;
+                downBtn.addEventListener('click', () => movePlayer(index, 1));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.title = 'Remove player';
+                deleteBtn.addEventListener('click', () => removePlayer(index));
+                
+                controlDiv.appendChild(upBtn);
+                controlDiv.appendChild(downBtn);
+                controlDiv.appendChild(deleteBtn);
+                actionCell.appendChild(controlDiv);
+                row.appendChild(actionCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedRow = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+        
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            
+            // Remove all drag-over classes
+            const rows = document.querySelectorAll('tr');
+            rows.forEach(row => row.classList.remove('drag-over'));
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDragEnter(e) {
+            if (this !== draggedRow && this.parentNode.tagName === 'TBODY') {
+                this.classList.add('drag-over');
+            }
+        }
+        
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedRow !== this && this.parentNode.tagName === 'TBODY') {
+                const fromIndex = parseInt(draggedRow.dataset.index);
+                const toIndex = parseInt(this.dataset.index);
+                
+                // Reorder the data
+                const movedPlayer = playerData.splice(fromIndex, 1)[0];
+                playerData.splice(toIndex, 0, movedPlayer);
+                
+                // Recreate the table and trigger auto-save
+                createTable();
+                updateField();
+                triggerAutoSave();
+            }
+            
+            return false;
+        }
+        
+        function movePlayer(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < playerData.length) {
+                // Swap players
+                const temp = playerData[index];
+                playerData[index] = playerData[newIndex];
+                playerData[newIndex] = temp;
+                
+                createTable();
+                updateField();
+                triggerAutoSave();
+            }
+        }
+        
+        function removePlayer(index) {
+            if (confirm(`Remove ${playerData[index].name || 'this player'} from the roster?`)) {
+                playerData.splice(index, 1);
+                createTable();
+                updateField();
+                triggerAutoSave();
+            }
+        }
+        
+        function addPlayer() {
+            playerData.push({
+                name: "New Player",
+                positions: ["BN", "BN", "BN", "BN", "BN"]
+            });
+            createTable();
+            
+            // Focus on the new player's name input
+            const inputs = document.querySelectorAll('.player-name-input');
+            if (inputs.length > 0) {
+                inputs[inputs.length - 1].focus();
+                inputs[inputs.length - 1].select();
+            }
+            
+            triggerAutoSave();
+        }
+        
+        function drawField() {
+            const canvas = document.getElementById('fieldCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Save context for scaling
+            ctx.save();
+            
+            // Draw grass with gradient
+            const grassGradient = ctx.createRadialGradient(size/2, size/2, size/12, size/2, size/2, size*0.67);
+            grassGradient.addColorStop(0, '#5cb85c');
+            grassGradient.addColorStop(1, '#4CAF50');
+            ctx.fillStyle = grassGradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw infield dirt
+            ctx.fillStyle = '#8D6E63';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.75);
+            ctx.lineTo(size * 0.75, size * 0.5);
+            ctx.lineTo(size * 0.5, size * 0.25);
+            ctx.lineTo(size * 0.25, size * 0.5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw pitcher's mound
+            ctx.fillStyle = '#6D4C41';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.6, size * 0.05, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw bases
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            
+            // Home plate
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.742);
+            ctx.lineTo(size * 0.475, size * 0.717);
+            ctx.lineTo(size * 0.475, size * 0.692);
+            ctx.lineTo(size * 0.5, size * 0.667);
+            ctx.lineTo(size * 0.525, size * 0.692);
+            ctx.lineTo(size * 0.525, size * 0.717);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // First base
+            const baseSize = size * 0.033;
+            ctx.fillRect(size * 0.683, size * 0.483, baseSize, baseSize);
+            ctx.strokeRect(size * 0.683, size * 0.483, baseSize, baseSize);
+            
+            // Second base
+            ctx.save();
+            ctx.translate(size * 0.5, size * 0.367);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillRect(-baseSize/2, -baseSize/2, baseSize, baseSize);
+            ctx.strokeRect(-baseSize/2, -baseSize/2, baseSize, baseSize);
+            ctx.restore();
+            
+            // Third base
+            ctx.fillRect(size * 0.283, size * 0.483, baseSize, baseSize);
+            ctx.strokeRect(size * 0.283, size * 0.483, baseSize, baseSize);
+            
+            // Draw foul lines
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.717);
+            ctx.lineTo(size * 0.833, size * 0.383);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.717);
+            ctx.lineTo(size * 0.167, size * 0.383);
+            ctx.stroke();
+            
+            // Draw outfield fence
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.717, size * 0.633, -0.7 * Math.PI, -0.3 * Math.PI);
+            ctx.stroke();
+            
+            // Draw team branding in the outfield
+            const fontSize = Math.floor(size * 0.075);
+            ctx.fillStyle = 'rgba(27, 58, 107, 0.4)';
+            ctx.font = `bold italic ${fontSize}px Georgia, serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Yard Goats', size * 0.5, size * 0.083);
+            
+            // Draw league name
+            const smallFontSize = Math.floor(size * 0.02);
+            ctx.fillStyle = 'rgba(79, 179, 185, 0.5)';
+            ctx.font = `bold ${smallFontSize}px Arial`;
+            ctx.fillText('SMYRNA LITTLE LEAGUE', size * 0.5, size * 0.042);
+            
+            // Add goat emoji decorations
+            const emojiFontSize = Math.floor(size * 0.042);
+            ctx.font = `${emojiFontSize}px serif`;
+            ctx.fillText('🐐', size * 0.167, size * 0.083);
+            ctx.fillText('🐐', size * 0.833, size * 0.083);
+            
+            ctx.restore();
+        }
+        
+        function updateField() {
+            drawField();
+            
+            const canvas = document.getElementById('fieldCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const inning = parseInt(document.getElementById('inningSelect').value) - 1;
+            
+            // Track occupied positions
+            const occupiedPositions = {};
+            
+            playerData.forEach((player, battingOrder) => {
+                const position = player.positions[inning];
+                // Skip if position is empty, bench, or invalid
+                if (position && position !== 'BN' && positionCoords[position]) {
+                    if (!occupiedPositions[position]) {
+                        occupiedPositions[position] = [];
+                    }
+                    occupiedPositions[position].push({
+                        name: player.name,
+                        order: battingOrder + 1
+                    });
+                }
+            });
+            
+            // Draw players
+            Object.entries(occupiedPositions).forEach(([position, players]) => {
+                const baseCoord = positionCoords[position];
+                
+                players.forEach((player, index) => {
+                    // Calculate position with offset for multiple players
+                    const offsetX = (index * 0.042 - ((players.length - 1) * 0.042) / 2) * size;
+                    const x = baseCoord.x * size + offsetX;
+                    const y = baseCoord.y * size;
+                    const playerRadius = size * 0.03;
+                    
+                    // Draw player circle with gradient
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, playerRadius);
+                    gradient.addColorStop(0, '#FFD700');
+                    gradient.addColorStop(1, '#FFA500');
+                    ctx.fillStyle = gradient;
+                    ctx.strokeStyle = '#1b3a6b';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(x, y, playerRadius, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Draw position label
+                    ctx.fillStyle = '#1b3a6b';
+                    ctx.font = `bold ${Math.floor(size * 0.02)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(position, x, y);
+                    
+                    // Draw batting order number
+                    ctx.fillStyle = '#4fb3b9';
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.font = `bold ${Math.floor(size * 0.018)}px Arial`;
+                    const orderY = y - playerRadius - (size * 0.017);
+                    ctx.strokeText(`#${player.order}`, x, orderY);
+                    ctx.fillText(`#${player.order}`, x, orderY);
+                    
+                    // Draw player name
+                    if (player.name) {
+                        ctx.fillStyle = 'white';
+                        ctx.strokeStyle = '#1b3a6b';
+                        ctx.lineWidth = 3;
+                        ctx.font = `bold ${Math.floor(size * 0.018)}px Arial`;
+                        const nameParts = player.name.split(' ');
+                        const lastName = nameParts[nameParts.length - 1];
+                        const nameY = y + playerRadius + (size * 0.02);
+                        ctx.strokeText(lastName, x, nameY);
+                        ctx.fillText(lastName, x, nameY);
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+}
