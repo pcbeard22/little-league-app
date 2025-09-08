@@ -37,7 +37,7 @@
         .header {
             background: linear-gradient(135deg, #1b3a6b 0%, #2d5a9b 50%, #4fb3b9 100%);
             color: white;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -95,8 +95,8 @@
         }
         
         .header h1 {
-            font-size: 2.8em;
-            margin-bottom: 10px;
+            font-size: 2.2em;
+            margin-bottom: 8px;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
             font-family: 'Georgia', serif;
             font-style: italic;
@@ -133,13 +133,13 @@
         
         .game-controls {
             background: linear-gradient(to right, #f5f5f5, #e8f4f5);
-            padding: 20px;
+            padding: 15px;
             border-bottom: 3px solid #1b3a6b;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
         
         .current-game-info {
@@ -244,8 +244,8 @@
         .content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 30px;
+            gap: 20px;
+            padding: 20px;
             background: linear-gradient(to bottom, #fff, #f8fcfc);
         }
         
@@ -342,7 +342,7 @@
         .canvas-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: 450px;
             margin: 0 auto;
         }
         
@@ -357,8 +357,6 @@
         
         .table-section {
             overflow-x: auto;
-            max-height: 600px;
-            overflow-y: auto;
             position: relative;
         }
         
@@ -524,26 +522,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            position: sticky;
-            top: 0;
+            margin-bottom: 15px;
             background: linear-gradient(to bottom, #fff, #f8fcfc);
             z-index: 5;
-            padding: 15px 0;
+            padding: 10px 0;
         }
         
         .table-header h2 {
             color: #1b3a6b;
-            font-size: 1.8em;
+            font-size: 1.5em;
         }
         
         .add-player-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -565,7 +561,7 @@
         }
         
         th, td {
-            padding: 10px 8px;
+            padding: 8px 6px;
             text-align: center;
             border: 1px solid #e0e0e0;
             overflow: hidden;
@@ -588,7 +584,7 @@
         .batting-order {
             font-weight: bold;
             color: #1b3a6b;
-            font-size: 18px;
+            font-size: 16px;
             width: 40px;
             text-shadow: 1px 1px 2px rgba(79, 179, 185, 0.3);
         }
@@ -603,10 +599,10 @@
             flex: 1;
             width: 100%;
             max-width: 180px;
-            padding: 8px;
+            padding: 6px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
         }
         
@@ -619,10 +615,10 @@
         .position-select {
             width: 100%;
             min-width: 60px;
-            padding: 8px 4px;
+            padding: 6px 4px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             background: white;
             cursor: pointer;
@@ -707,12 +703,13 @@
         .info-box {
             background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
             color: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             border: 2px solid #ffd700;
+            font-size: 13px;
         }
         
         .info-box p {
@@ -1221,7 +1218,7 @@
             
             // Set canvas actual size (for drawing) with device pixel ratio for crisp display
             const dpr = window.devicePixelRatio || 1;
-            const size = Math.min(containerWidth, 600);
+            const size = Math.min(containerWidth, 450);
             
             // Set actual size in memory
             canvas.width = size * dpr;
@@ -1236,7 +1233,7 @@
             ctx.scale(dpr, dpr);
             
             // Calculate scale for drawing
-            canvasScale = size / 600;
+            canvasScale = size / 450;
         }
         
         // Auto-save functionality
