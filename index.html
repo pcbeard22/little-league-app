@@ -11,6 +11,12 @@
     <link rel="apple-touch-icon" href="yardgoats-icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="yardgoats-icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="yardgoats-icon-512.png">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -965,13 +971,10 @@
                 <input type="text" id="gameName" class="game-name-input" placeholder="Enter game name..." value="Yard Goats Game 1">
             </div>
             <div class="game-buttons">
-                <button id="saveGameBtn" class="control-btn primary">💾 Save</button>
-                <button id="loadGameBtn" class="control-btn">📂 Load</button>
-                <button id="exportGameBtn" class="control-btn">📥 Export</button>
-                <button id="importGameBtn" class="control-btn">📤 Import</button>
+                <button id="saveGameBtn" class="control-btn primary">☁️ Save to Cloud</button>
+                <button id="loadGameBtn" class="control-btn">📂 My Games</button>
                 <button id="shareGameBtn" class="control-btn">🔗 Share</button>
-                <button id="newGameBtn" class="control-btn danger">🔄 New</button>
-                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <button id="newGameBtn" class="control-btn danger">🔄 New Game</button>
                 <div class="save-status" id="saveStatus">
                     <span class="status-icon">✓</span>
                     <span class="status-text">Ready</span>
@@ -1050,6 +1053,51 @@
     </div>
     
     <script>
+        // Firebase Configuration - REPLACE WITH YOUR CONFIG FROM FIREBASE CONSOLE
+        const firebaseConfig = {
+            apiKey: "YOUR-API-KEY",
+            authDomain: "YOUR-AUTH-DOMAIN",
+            projectId: "YOUR-PROJECT-ID",
+            storageBucket: "YOUR-STORAGE-BUCKET",
+            messagingSenderId: "YOUR-SENDER-ID",
+            appId: "YOUR-APP-ID"
+        };
+        
+        // Initialize Firebase
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        
+        // Only initialize if config is set
+        if (firebaseConfig.apiKey !== "YOUR-API-KEY") {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            
+            // Enable offline persistence
+            db.enablePersistence().catch((err) => {
+                console.log('Offline persistence failed:', err);
+            });
+            
+            // Sign in anonymously automatically
+            auth.signInAnonymously().then(() => {
+                console.log('Signed in anonymously');
+            }).catch((error) => {
+                console.error('Auth error:', error);
+            });
+            
+            // Listen for auth changes
+            auth.onAuthStateChanged((user) => {
+                currentUser = user;
+                if (user) {
+                    console.log('User ID:', user.uid);
+                    updateSaveStatus('cloud');
+                }
+            });
+        } else {
+            console.log('Firebase not configured - using local storage only');
+        }
+        
         // Initial player data
         let playerData = [
             { name: "Atlas Pietrusza", positions: ["CF", "3B", "3B", "P", "BN"] },
@@ -1115,9 +1163,6 @@
             // Game controls
             document.getElementById('saveGameBtn').addEventListener('click', saveGame);
             document.getElementById('loadGameBtn').addEventListener('click', showSavedGames);
-            document.getElementById('exportGameBtn').addEventListener('click', exportGame);
-            document.getElementById('importGameBtn').addEventListener('click', () => document.getElementById('importFile').click());
-            document.getElementById('importFile').addEventListener('change', importGame);
             document.getElementById('shareGameBtn').addEventListener('click', shareGame);
             document.getElementById('newGameBtn').addEventListener('click', newGame);
             document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
@@ -1282,7 +1327,7 @@
         }
         
         // Manual save game function
-        function saveGame() {
+        async function saveGame() {
             const gameName = document.getElementById('gameName').value || 'Unnamed Game';
             
             // Check if game name is empty
@@ -1295,10 +1340,38 @@
             const gameData = {
                 name: gameName,
                 players: playerData,
-                savedAt: new Date().toISOString()
+                savedAt: new Date().toISOString(),
+                userId: currentUser ? currentUser.uid : 'local'
             };
             
-            // Get existing saved games
+            updateSaveStatus('saving');
+            
+            // Save to Firebase if available
+            if (db && currentUser) {
+                try {
+                    // Generate a game ID
+                    const gameId = gameName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                    
+                    // Save to Firestore
+                    await db.collection('games').doc(`${currentUser.uid}_${gameId}`).set(gameData);
+                    
+                    // Also save to localStorage as backup
+                    localStorage.setItem('currentGame', JSON.stringify(gameData));
+                    
+                    updateSaveStatus('saved');
+                    alert(`Game "${gameName}" saved to cloud!`);
+                } catch(error) {
+                    console.error('Firebase save error:', error);
+                    saveToLocalStorage(gameData);
+                }
+            } else {
+                // Fallback to localStorage
+                saveToLocalStorage(gameData);
+            }
+        }
+        
+        // Helper function for local storage saving
+        function saveToLocalStorage(gameData) {
             let savedGames = [];
             try {
                 savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
@@ -1306,29 +1379,23 @@
                 savedGames = [];
             }
             
-            // Check if game with same name exists
-            const existingIndex = savedGames.findIndex(game => game.name === gameName);
+            const existingIndex = savedGames.findIndex(game => game.name === gameData.name);
             
             if (existingIndex !== -1) {
-                // Update existing game
-                if (confirm(`Game "${gameName}" already exists. Do you want to overwrite it?`)) {
+                if (confirm(`Game "${gameData.name}" already exists locally. Overwrite?`)) {
                     savedGames[existingIndex] = gameData;
                 } else {
                     return;
                 }
             } else {
-                // Add new game
                 savedGames.push(gameData);
             }
             
-            // Save to localStorage
             try {
                 localStorage.setItem('baseballGames', JSON.stringify(savedGames));
                 localStorage.setItem('currentGame', JSON.stringify(gameData));
-                
-                // Show success message
                 updateSaveStatus('saved');
-                alert(`Game "${gameName}" saved successfully!`);
+                alert(`Game "${gameData.name}" saved locally!`);
             } catch(e) {
                 console.error('Unable to save game:', e);
                 alert('Failed to save game. Please try again.');
@@ -1350,12 +1417,17 @@
                 case 'saved':
                     saveStatus.className = 'save-status saved';
                     statusIcon.textContent = '✓';
-                    statusText.textContent = 'Saved';
+                    statusText.textContent = db ? 'Cloud Saved' : 'Local Saved';
                     break;
                 case 'error':
                     saveStatus.className = 'save-status';
                     statusIcon.textContent = '⚠️';
                     statusText.textContent = 'Error';
+                    break;
+                case 'cloud':
+                    saveStatus.className = 'save-status saved';
+                    statusIcon.textContent = '☁️';
+                    statusText.textContent = 'Cloud Ready';
                     break;
             }
         }
@@ -1501,15 +1573,42 @@
         }
         
         // Game Management Functions
-        function showSavedGames() {
+        async function showSavedGames() {
             const modal = document.getElementById('savedGamesModal');
             const savedGamesList = document.getElementById('savedGamesList');
             let savedGames = [];
             
-            try {
-                savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
-            } catch(e) {
-                savedGames = [];
+            savedGamesList.innerHTML = '<div class="empty-state"><p>Loading games...</p></div>';
+            modal.style.display = 'block';
+            
+            // Try to load from Firebase first
+            if (db && currentUser) {
+                try {
+                    const snapshot = await db.collection('games')
+                        .where('userId', '==', currentUser.uid)
+                        .orderBy('savedAt', 'desc')
+                        .get();
+                    
+                    savedGames = [];
+                    snapshot.forEach(doc => {
+                        savedGames.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch(error) {
+                    console.error('Firebase load error:', error);
+                    // Fall back to localStorage
+                    try {
+                        savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+                    } catch(e) {
+                        savedGames = [];
+                    }
+                }
+            } else {
+                // Use localStorage if Firebase not available
+                try {
+                    savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+                } catch(e) {
+                    savedGames = [];
+                }
             }
             
             savedGamesList.innerHTML = '';
@@ -1518,7 +1617,7 @@
                 savedGamesList.innerHTML = `
                     <div class="empty-state">
                         <h3>No Saved Games</h3>
-                        <p>Games are automatically saved as you make changes!</p>
+                        <p>${db ? 'Save your first game to the cloud!' : 'Games are automatically saved locally!'}</p>
                     </div>
                 `;
             } else {
