@@ -1,10 +1,15 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1b3a6b">
     <title>Yard Goats Baseball Field Manager</title>
-    <link rel="manifest" href="manifest.json"> <style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
         * {
             margin: 0;
             padding: 0;
@@ -34,6 +39,12 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px;
+            }
         }
         
         .header::before {
@@ -66,6 +77,13 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         
+        @media (max-width: 768px) {
+            .league-name {
+                font-size: 0.9em;
+                letter-spacing: 2px;
+            }
+        }
+        
         .header h1 {
             font-size: 2.8em;
             margin-bottom: 10px;
@@ -78,6 +96,16 @@
             background-clip: text;
         }
         
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 0.9em;
+            }
+        }
+        
         .team-name {
             font-size: 1.6em;
             color: #4fb3b9;
@@ -85,6 +113,12 @@
             font-style: italic;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .team-name {
+                font-size: 1.2em;
+            }
         }
         
         .game-controls {
@@ -208,15 +242,20 @@
         @media (max-width: 1024px) {
             .content {
                 grid-template-columns: 1fr;
+                padding: 20px;
+                gap: 20px;
             }
             
             .header::before,
             .header::after {
                 display: none;
             }
-            
-            .header h1 {
-                font-size: 2em;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+                gap: 15px;
             }
         }
         
@@ -229,29 +268,61 @@
         .inning-selector {
             margin-bottom: 20px;
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
             align-items: center;
         }
         
         .inning-selector label {
             font-weight: 600;
             color: #1b3a6b;
+            font-size: 1.1em;
         }
         
-        .inning-selector select {
-            padding: 10px 20px;
-            font-size: 16px;
+        .inning-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .inning-btn {
+            padding: 15px 25px;
+            font-size: 18px;
             border: 2px solid #1b3a6b;
-            border-radius: 8px;
+            border-radius: 10px;
             background: white;
             color: #1b3a6b;
             cursor: pointer;
             transition: all 0.3s;
+            font-weight: 600;
+            min-width: 80px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
-        .inning-selector select:hover {
+        .inning-btn:hover {
             border-color: #4fb3b9;
-            box-shadow: 0 2px 8px rgba(79, 179, 185, 0.3);
+            box-shadow: 0 4px 12px rgba(79, 179, 185, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .inning-btn:active {
+            transform: translateY(0);
+        }
+        
+        .inning-btn.active {
+            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            color: white;
+            border-color: #1b3a6b;
+            box-shadow: 0 4px 12px rgba(27, 58, 107, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .inning-btn {
+                padding: 12px 20px;
+                font-size: 16px;
+                min-width: 70px;
+            }
         }
         
         .canvas-container {
@@ -272,6 +343,146 @@
         
         .table-section {
             overflow-x: auto;
+        }
+        
+        /* Mobile Card Layout for Players */
+        .mobile-cards {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .table-section table {
+                display: none;
+            }
+            
+            .mobile-cards {
+                display: block;
+            }
+            
+            .player-card {
+                background: white;
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 15px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                transition: all 0.3s;
+            }
+            
+            .player-card.dragging {
+                opacity: 0.5;
+                transform: scale(0.95);
+            }
+            
+            .player-card:active {
+                transform: scale(0.98);
+            }
+            
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #f0f0f0;
+            }
+            
+            .card-order {
+                background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+                color: white;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 18px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            }
+            
+            .card-name {
+                flex: 1;
+                margin: 0 15px;
+            }
+            
+            .card-name input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 500;
+            }
+            
+            .card-actions {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .card-actions button {
+                width: 35px;
+                height: 35px;
+                border-radius: 8px;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            
+            .card-move-up {
+                background: #4fb3b9;
+                color: white;
+            }
+            
+            .card-move-down {
+                background: #4fb3b9;
+                color: white;
+            }
+            
+            .card-delete {
+                background: #d9534f;
+                color: white;
+            }
+            
+            .card-positions {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+            }
+            
+            .card-position {
+                text-align: center;
+            }
+            
+            .card-position label {
+                display: block;
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 4px;
+                font-weight: 600;
+            }
+            
+            .card-position select {
+                width: 100%;
+                padding: 8px 4px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 600;
+                text-align: center;
+                background: white;
+            }
+            
+            .drag-handle-card {
+                cursor: move;
+                color: #999;
+                font-size: 24px;
+                padding: 0 5px;
+            }
         }
         
         .table-header {
@@ -656,6 +867,45 @@
             .batting-order {
                 font-size: 16px;
             }
+            
+            /* Full-screen modals on mobile */
+            .modal-content {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                border-radius: 0;
+                max-width: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .modal-header {
+                border-radius: 0;
+                padding: 15px;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            
+            .modal-body {
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 15px;
+                max-height: none;
+            }
+            
+            .saved-game-item {
+                padding: 12px;
+            }
+            
+            .saved-game-info h3 {
+                font-size: 1.1em;
+            }
+            
+            .saved-game-info p {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -686,14 +936,14 @@
         <div class="content">
             <div class="field-section">
                 <div class="inning-selector">
-                    <label for="inningSelect">Select Inning:</label>
-                    <select id="inningSelect">
-                        <option value="1">1st Inning</option>
-                        <option value="2">2nd Inning</option>
-                        <option value="3">3rd Inning</option>
-                        <option value="4">4th Inning</option>
-                        <option value="5">5th Inning</option>
-                    </select>
+                    <label>Select Inning:</label>
+                    <div class="inning-buttons">
+                        <button class="inning-btn active" data-inning="1">1st</button>
+                        <button class="inning-btn" data-inning="2">2nd</button>
+                        <button class="inning-btn" data-inning="3">3rd</button>
+                        <button class="inning-btn" data-inning="4">4th</button>
+                        <button class="inning-btn" data-inning="5">5th</button>
+                    </div>
                 </div>
                 <div class="canvas-container">
                     <canvas id="fieldCanvas"></canvas>
@@ -728,6 +978,11 @@
                     <tbody id="tableBody">
                         </tbody>
                 </table>
+                
+                <!-- Mobile Card Layout -->
+                <div id="mobileCards" class="mobile-cards">
+                    <!-- Cards will be dynamically generated here -->
+                </div>
             </div>
         </div>
     </div>
@@ -792,6 +1047,9 @@
         let draggedRow = null;
         let autoSaveTimeout = null;
         let canvasScale = 1;
+        let currentInning = 1; // Track current inning
+        let touchStartX = 0;
+        let touchStartY = 0;
         
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
@@ -810,8 +1068,11 @@
             document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
             document.getElementById('closeModalBtn').addEventListener('click', closeSavedGames);
             
-            // Inning selector
-            document.getElementById('inningSelect').addEventListener('change', updateField);
+            // Inning buttons
+            const inningButtons = document.querySelectorAll('.inning-btn');
+            inningButtons.forEach(button => {
+                button.addEventListener('click', handleInningChange);
+            });
             
             // Game name input with auto-save
             document.getElementById('gameName').addEventListener('input', triggerAutoSave);
@@ -829,6 +1090,80 @@
                 setupCanvas();
                 updateField();
             });
+            
+            // Touch gestures for inning navigation
+            setupTouchGestures();
+        }
+        
+        // Setup touch gestures for swipe navigation
+        function setupTouchGestures() {
+            const fieldSection = document.querySelector('.field-section');
+            
+            fieldSection.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            fieldSection.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                handleSwipe(touchStartX, touchEndX, touchStartY, touchEndY);
+            }, { passive: true });
+        }
+        
+        // Handle swipe gestures
+        function handleSwipe(startX, endX, startY, endY) {
+            const diffX = endX - startX;
+            const diffY = endY - startY;
+            const threshold = 50; // Minimum distance for swipe
+            
+            // Only handle horizontal swipes
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
+                if (diffX > 0) {
+                    // Swipe right - previous inning
+                    navigateInning(-1);
+                } else {
+                    // Swipe left - next inning
+                    navigateInning(1);
+                }
+            }
+        }
+        
+        // Navigate between innings
+        function navigateInning(direction) {
+            const newInning = currentInning + direction;
+            if (newInning >= 1 && newInning <= 5) {
+                // Update current inning
+                currentInning = newInning;
+                
+                // Update button states
+                document.querySelectorAll('.inning-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.dataset.inning) === currentInning) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Update field display
+                updateField();
+            }
+        }
+        
+        // Handle inning button clicks
+        function handleInningChange(e) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.inning-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            e.target.classList.add('active');
+            
+            // Update current inning
+            currentInning = parseInt(e.target.dataset.inning);
+            
+            // Update the field display
+            updateField();
         }
         
         // Setup responsive canvas
@@ -1052,6 +1387,9 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
+            // Also create mobile cards
+            createMobileCards();
+            
             playerData.forEach((player, index) => {
                 const row = document.createElement('tr');
                 row.draggable = true;
@@ -1252,6 +1590,114 @@
             triggerAutoSave();
         }
         
+        // Create mobile-friendly card layout
+        function createMobileCards() {
+            const container = document.getElementById('mobileCards');
+            container.innerHTML = '';
+            
+            playerData.forEach((player, index) => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.dataset.index = index;
+                
+                // Card HTML structure
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-order">${index + 1}</div>
+                        <div class="card-name">
+                            <input type="text" 
+                                   value="${player.name}" 
+                                   placeholder="Enter player name"
+                                   data-index="${index}">
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-move-up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                            <button class="card-move-down" data-index="${index}" ${index === playerData.length - 1 ? 'disabled' : ''}>↓</button>
+                            <button class="card-delete" data-index="${index}">×</button>
+                        </div>
+                    </div>
+                    <div class="card-positions">
+                        <div class="card-position">
+                            <label>1st</label>
+                            <select data-index="${index}" data-inning="0">
+                                ${validPositions.map(pos => 
+                                    `<option value="${pos.value}" ${pos.value === player.positions[0] ? 'selected' : ''}>
+                                        ${pos.value || '--'}
+                                    </option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="card-position">
+                            <label>2nd</label>
+                            <select data-index="${index}" data-inning="1">
+                                ${validPositions.map(pos => 
+                                    `<option value="${pos.value}" ${pos.value === player.positions[1] ? 'selected' : ''}>
+                                        ${pos.value || '--'}
+                                    </option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="card-position">
+                            <label>3rd</label>
+                            <select data-index="${index}" data-inning="2">
+                                ${validPositions.map(pos => 
+                                    `<option value="${pos.value}" ${pos.value === player.positions[2] ? 'selected' : ''}>
+                                        ${pos.value || '--'}
+                                    </option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="card-position">
+                            <label>4th</label>
+                            <select data-index="${index}" data-inning="3">
+                                ${validPositions.map(pos => 
+                                    `<option value="${pos.value}" ${pos.value === player.positions[3] ? 'selected' : ''}>
+                                        ${pos.value || '--'}
+                                    </option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="card-position">
+                            <label>5th</label>
+                            <select data-index="${index}" data-inning="4">
+                                ${validPositions.map(pos => 
+                                    `<option value="${pos.value}" ${pos.value === player.positions[4] ? 'selected' : ''}>
+                                        ${pos.value || '--'}
+                                    </option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners
+                const nameInput = card.querySelector('.card-name input');
+                nameInput.addEventListener('input', (e) => {
+                    playerData[index].name = e.target.value;
+                    updateField();
+                    triggerAutoSave();
+                });
+                
+                // Position selects
+                card.querySelectorAll('.card-position select').forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const playerIndex = parseInt(e.target.dataset.index);
+                        const inningIndex = parseInt(e.target.dataset.inning);
+                        playerData[playerIndex].positions[inningIndex] = e.target.value;
+                        updateField();
+                        triggerAutoSave();
+                    });
+                });
+                
+                // Action buttons
+                card.querySelector('.card-move-up').addEventListener('click', () => movePlayer(index, -1));
+                card.querySelector('.card-move-down').addEventListener('click', () => movePlayer(index, 1));
+                card.querySelector('.card-delete').addEventListener('click', () => removePlayer(index));
+                
+                container.appendChild(card);
+            });
+        }
+        
         function drawField() {
             const canvas = document.getElementById('fieldCanvas');
             const ctx = canvas.getContext('2d');
@@ -1369,7 +1815,7 @@
             const canvas = document.getElementById('fieldCanvas');
             const ctx = canvas.getContext('2d');
             const size = canvas.width;
-            const inning = parseInt(document.getElementById('inningSelect').value) - 1;
+            const inning = currentInning - 1;
             
             // Track occupied positions
             const occupiedPositions = {};
