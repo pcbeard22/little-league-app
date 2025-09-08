@@ -176,12 +176,12 @@
         }
         
         .control-btn {
-            padding: 10px 20px;
+            padding: 8px 12px;
             background: white;
             color: #1b3a6b;
             border: 2px solid #1b3a6b;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -965,12 +965,16 @@
                 <input type="text" id="gameName" class="game-name-input" placeholder="Enter game name..." value="Yard Goats Game 1">
             </div>
             <div class="game-buttons">
-                <button id="saveGameBtn" class="control-btn primary">💾 Save Game</button>
-                <button id="loadGameBtn" class="control-btn">📂 Load Game</button>
-                <button id="newGameBtn" class="control-btn danger">🔄 New Game</button>
+                <button id="saveGameBtn" class="control-btn primary">💾 Save</button>
+                <button id="loadGameBtn" class="control-btn">📂 Load</button>
+                <button id="exportGameBtn" class="control-btn">📥 Export</button>
+                <button id="importGameBtn" class="control-btn">📤 Import</button>
+                <button id="shareGameBtn" class="control-btn">🔗 Share</button>
+                <button id="newGameBtn" class="control-btn danger">🔄 New</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
                 <div class="save-status" id="saveStatus">
                     <span class="status-icon">✓</span>
-                    <span class="status-text">Auto-save enabled</span>
+                    <span class="status-text">Ready</span>
                 </div>
             </div>
         </div>
@@ -1099,6 +1103,7 @@
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             initializeEventListeners();
+            loadFromUrl(); // Check for shared game in URL first
             loadFromLocalStorage();
             createTable();
             setupCanvas();
@@ -1110,6 +1115,10 @@
             // Game controls
             document.getElementById('saveGameBtn').addEventListener('click', saveGame);
             document.getElementById('loadGameBtn').addEventListener('click', showSavedGames);
+            document.getElementById('exportGameBtn').addEventListener('click', exportGame);
+            document.getElementById('importGameBtn').addEventListener('click', () => document.getElementById('importFile').click());
+            document.getElementById('importFile').addEventListener('change', importGame);
+            document.getElementById('shareGameBtn').addEventListener('click', shareGame);
             document.getElementById('newGameBtn').addEventListener('click', newGame);
             document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
             document.getElementById('closeModalBtn').addEventListener('click', closeSavedGames);
@@ -1341,13 +1350,139 @@
                 case 'saved':
                     saveStatus.className = 'save-status saved';
                     statusIcon.textContent = '✓';
-                    statusText.textContent = 'All changes saved';
+                    statusText.textContent = 'Saved';
                     break;
                 case 'error':
                     saveStatus.className = 'save-status';
                     statusIcon.textContent = '⚠️';
-                    statusText.textContent = 'Save failed';
+                    statusText.textContent = 'Error';
                     break;
+            }
+        }
+        
+        // Export game to JSON file
+        function exportGame() {
+            const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            const gameData = {
+                name: gameName,
+                players: playerData,
+                exportedAt: new Date().toISOString(),
+                version: '1.0.0'
+            };
+            
+            // Create blob and download link
+            const dataStr = JSON.stringify(gameData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create download link and click it
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${gameName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            updateSaveStatus('saved');
+            alert(`Game exported as ${a.download}`);
+        }
+        
+        // Import game from JSON file
+        function importGame(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const gameData = JSON.parse(e.target.result);
+                    
+                    // Validate the data
+                    if (!gameData.players || !Array.isArray(gameData.players)) {
+                        throw new Error('Invalid game file format');
+                    }
+                    
+                    // Load the game data
+                    playerData = gameData.players;
+                    document.getElementById('gameName').value = gameData.name || 'Imported Game';
+                    
+                    // Recreate the table and field
+                    createTable();
+                    updateField();
+                    
+                    updateSaveStatus('saved');
+                    alert(`Game "${gameData.name}" imported successfully!`);
+                    
+                    // Clear the file input
+                    event.target.value = '';
+                } catch(error) {
+                    alert('Failed to import game. Please check the file format.');
+                    console.error('Import error:', error);
+                    event.target.value = '';
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Generate shareable link
+        function shareGame() {
+            const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            const gameData = {
+                n: gameName,  // Shortened keys for URL
+                p: playerData,
+                v: '1'
+            };
+            
+            // Compress the data
+            const jsonStr = JSON.stringify(gameData);
+            const compressed = btoa(encodeURIComponent(jsonStr));
+            
+            // Create the shareable URL
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareUrl = `${baseUrl}?game=${compressed}`;
+            
+            // Check if URL is too long
+            if (shareUrl.length > 2000) {
+                alert('Game data is too large to share via link. Please use Export instead.');
+                return;
+            }
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                updateSaveStatus('saved');
+                alert('Share link copied to clipboard! Send this link to access your game on any device.');
+            }).catch(() => {
+                // Fallback for older browsers
+                prompt('Copy this link to share your game:', shareUrl);
+            });
+        }
+        
+        // Load game from URL parameters
+        function loadFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameData = urlParams.get('game');
+            
+            if (gameData) {
+                try {
+                    const decoded = decodeURIComponent(atob(gameData));
+                    const game = JSON.parse(decoded);
+                    
+                    if (game.p && Array.isArray(game.p)) {
+                        playerData = game.p;
+                        document.getElementById('gameName').value = game.n || 'Shared Game';
+                        createTable();
+                        updateField();
+                        
+                        // Clear URL parameters
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        alert(`Loaded shared game: ${game.n}`);
+                    }
+                } catch(error) {
+                    console.error('Failed to load shared game:', error);
+                }
             }
         }
         
