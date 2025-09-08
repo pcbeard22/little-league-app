@@ -965,11 +965,12 @@
                 <input type="text" id="gameName" class="game-name-input" placeholder="Enter game name..." value="Yard Goats Game 1">
             </div>
             <div class="game-buttons">
+                <button id="saveGameBtn" class="control-btn primary">💾 Save Game</button>
                 <button id="loadGameBtn" class="control-btn">📂 Load Game</button>
                 <button id="newGameBtn" class="control-btn danger">🔄 New Game</button>
                 <div class="save-status" id="saveStatus">
-                    <span class="status-icon">💾</span>
-                    <span class="status-text">All changes saved</span>
+                    <span class="status-icon">✓</span>
+                    <span class="status-text">Auto-save enabled</span>
                 </div>
             </div>
         </div>
@@ -1107,6 +1108,7 @@
         // Setup all event listeners
         function initializeEventListeners() {
             // Game controls
+            document.getElementById('saveGameBtn').addEventListener('click', saveGame);
             document.getElementById('loadGameBtn').addEventListener('click', showSavedGames);
             document.getElementById('newGameBtn').addEventListener('click', newGame);
             document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
@@ -1266,6 +1268,61 @@
                 updateSaveStatus('saved');
             } catch(e) {
                 console.error('Unable to auto-save:', e);
+                updateSaveStatus('error');
+            }
+        }
+        
+        // Manual save game function
+        function saveGame() {
+            const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            
+            // Check if game name is empty
+            if (!gameName || gameName === 'Unnamed Game') {
+                alert('Please enter a game name before saving.');
+                document.getElementById('gameName').focus();
+                return;
+            }
+            
+            const gameData = {
+                name: gameName,
+                players: playerData,
+                savedAt: new Date().toISOString()
+            };
+            
+            // Get existing saved games
+            let savedGames = [];
+            try {
+                savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+            } catch(e) {
+                savedGames = [];
+            }
+            
+            // Check if game with same name exists
+            const existingIndex = savedGames.findIndex(game => game.name === gameName);
+            
+            if (existingIndex !== -1) {
+                // Update existing game
+                if (confirm(`Game "${gameName}" already exists. Do you want to overwrite it?`)) {
+                    savedGames[existingIndex] = gameData;
+                } else {
+                    return;
+                }
+            } else {
+                // Add new game
+                savedGames.push(gameData);
+            }
+            
+            // Save to localStorage
+            try {
+                localStorage.setItem('baseballGames', JSON.stringify(savedGames));
+                localStorage.setItem('currentGame', JSON.stringify(gameData));
+                
+                // Show success message
+                updateSaveStatus('saved');
+                alert(`Game "${gameName}" saved successfully!`);
+            } catch(e) {
+                console.error('Unable to save game:', e);
+                alert('Failed to save game. Please try again.');
                 updateSaveStatus('error');
             }
         }
