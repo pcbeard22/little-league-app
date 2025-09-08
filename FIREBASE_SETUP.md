@@ -44,10 +44,10 @@ service cloud.firestore {
 5. Copy the firebaseConfig object
 
 ## 6. Add Your Config to the App
-1. Open index.html
-2. Find the `firebaseConfig` object (around line 1050)
-3. Replace with your config from step 5
-4. Save the file
+1. Copy `firebase-config.template.js` to `firebase-config.js`
+2. Add your Firebase config from step 5 to `firebase-config.js`
+3. IMPORTANT: Never commit `firebase-config.js` to GitHub (it's in .gitignore)
+4. For production deployment, use environment variables or Netlify environment settings
 
 ## 7. Add Your Domain to Firebase
 1. In Firebase Console → Authentication → Settings → Authorized domains

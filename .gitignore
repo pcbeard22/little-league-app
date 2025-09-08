@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Firebase config (contains API keys)
+firebase-config.js
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Build files
+dist/
+build/
