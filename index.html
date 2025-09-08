@@ -978,7 +978,6 @@
                     <thead>
                         <tr>
                             <th style="width: 60px;">Order</th>
-                            <th style="width: 40px;"></th>
                             <th>Player Name</th>
                             <th>1st</th>
                             <th>2nd</th>
@@ -1421,11 +1420,6 @@
                 orderCell.className = 'batting-order';
                 orderCell.textContent = index + 1;
                 row.appendChild(orderCell);
-                
-                // Drag handle
-                const dragCell = document.createElement('td');
-                dragCell.innerHTML = '<span class="drag-handle">☰</span>';
-                row.appendChild(dragCell);
                 
                 // Player name cell
                 const nameCell = document.createElement('td');
