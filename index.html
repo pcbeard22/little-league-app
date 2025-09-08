@@ -1821,7 +1821,8 @@
             
             const canvas = document.getElementById('fieldCanvas');
             const ctx = canvas.getContext('2d');
-            const size = canvas.width;
+            // Use CSS display size for position calculations
+            const size = parseInt(canvas.style.width) || 600;
             const inning = currentInning - 1;
             
             // Track occupied positions
