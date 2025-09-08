@@ -1805,13 +1805,6 @@
             ctx.arc(size * 0.5, size * 0.717, size * 0.633, -0.7 * Math.PI, -0.3 * Math.PI);
             ctx.stroke();
             
-            // Draw league name only - smaller and subtle
-            const smallFontSize = Math.floor(size * 0.025);
-            ctx.fillStyle = 'rgba(79, 179, 185, 0.3)';
-            ctx.font = `bold ${smallFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('SMYRNA LITTLE LEAGUE', size * 0.5, size * 0.05);
             
             ctx.restore();
         }
