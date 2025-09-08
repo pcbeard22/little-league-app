@@ -260,6 +260,10 @@
             .header::after {
                 display: none;
             }
+            
+            .table-section {
+                max-height: 500px;
+            }
         }
         
         @media (max-width: 768px) {
@@ -353,6 +357,27 @@
         
         .table-section {
             overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .table-section::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .table-section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .table-section::-webkit-scrollbar-thumb {
+            background: #1b3a6b;
+            border-radius: 4px;
+        }
+        
+        .table-section::-webkit-scrollbar-thumb:hover {
+            background: #4fb3b9;
         }
         
         /* Mobile Card Layout for Players */
@@ -500,6 +525,11 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #fff, #f8fcfc);
+            z-index: 5;
+            padding: 15px 0;
         }
         
         .table-header h2 {
