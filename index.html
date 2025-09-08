@@ -531,12 +531,14 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             border-radius: 10px;
             overflow: hidden;
+            table-layout: fixed;
         }
         
         th, td {
-            padding: 12px;
+            padding: 10px 8px;
             text-align: center;
             border: 1px solid #e0e0e0;
+            overflow: hidden;
         }
         
         th {
@@ -569,6 +571,8 @@
         
         .player-name-input {
             flex: 1;
+            width: 100%;
+            max-width: 180px;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -584,7 +588,8 @@
         
         .position-select {
             width: 100%;
-            padding: 8px;
+            min-width: 60px;
+            padding: 8px 4px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
@@ -978,12 +983,12 @@
                     <thead>
                         <tr>
                             <th style="width: 60px;">Order</th>
-                            <th>Player Name</th>
-                            <th>1st</th>
-                            <th>2nd</th>
-                            <th>3rd</th>
-                            <th>4th</th>
-                            <th>5th</th>
+                            <th style="width: 200px; max-width: 200px;">Player Name</th>
+                            <th style="width: 80px;">1st</th>
+                            <th style="width: 80px;">2nd</th>
+                            <th style="width: 80px;">3rd</th>
+                            <th style="width: 80px;">4th</th>
+                            <th style="width: 80px;">5th</th>
                             <th style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
