@@ -306,6 +306,15 @@
             justify-content: center;
         }
         
+        @media (max-width: 768px) {
+            .inning-buttons {
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding: 5px 0;
+            }
+        }
+        
         .inning-btn {
             padding: 15px 25px;
             font-size: 18px;
@@ -318,6 +327,15 @@
             font-weight: 600;
             min-width: 80px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .inning-btn {
+                padding: 10px 15px;
+                font-size: 16px;
+                min-width: 65px;
+                flex-shrink: 0;
+            }
         }
         
         .inning-btn:hover {
@@ -350,6 +368,13 @@
             width: 100%;
             max-width: 450px;
             margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+            .canvas-container {
+                max-width: 100%;
+                padding: 0 5px;
+            }
         }
         
         #fieldCanvas {
@@ -1275,7 +1300,9 @@
             
             // Set canvas actual size (for drawing) with device pixel ratio for crisp display
             const dpr = window.devicePixelRatio || 1;
-            const size = Math.min(containerWidth, 450);
+            // Use full container width on mobile, max 450px on desktop
+            const isMobile = window.innerWidth <= 768;
+            const size = isMobile ? Math.min(containerWidth, window.innerWidth - 30) : Math.min(containerWidth, 450);
             
             // Set actual size in memory
             canvas.width = size * dpr;
@@ -2182,19 +2209,23 @@
                     ctx.fill();
                     ctx.stroke();
                     
-                    // Draw position label
+                    // Draw position label (larger on mobile)
+                    const isMobile = window.innerWidth <= 768;
+                    const positionFontSize = isMobile ? Math.floor(size * 0.028) : Math.floor(size * 0.022);
+                    const nameFontSize = isMobile ? Math.floor(size * 0.032) : Math.floor(size * 0.024);
+                    
                     ctx.fillStyle = '#1b3a6b';
-                    ctx.font = `bold ${Math.floor(size * 0.022)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial`;
+                    ctx.font = `bold ${positionFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(position, x, y);
                     
-                    // Draw player name (first name only, larger font)
+                    // Draw player name (first name only, larger font on mobile)
                     if (player.name) {
                         ctx.fillStyle = 'white';
                         ctx.strokeStyle = '#1b3a6b';
                         ctx.lineWidth = 4;
-                        ctx.font = `bold ${Math.floor(size * 0.024)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial`;
+                        ctx.font = `bold ${nameFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial`;
                         const nameParts = player.name.split(' ');
                         const firstName = nameParts[0];
                         const nameY = y + playerRadius + (size * 0.025);
