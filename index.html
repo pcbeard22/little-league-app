@@ -9,6 +9,8 @@
     <title>Yard Goats Baseball Field Manager</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <style>
         * {
             margin: 0;
@@ -48,23 +50,31 @@
         }
         
         .header::before {
-            content: '🐐';
+            content: '';
             position: absolute;
-            left: 50px;
+            left: 30px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 60px;
-            opacity: 0.2;
+            width: 60px;
+            height: 60px;
+            background: url('icon-192.png') no-repeat center;
+            background-size: contain;
+            opacity: 0.9;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
         }
         
         .header::after {
-            content: '⚾';
+            content: '';
             position: absolute;
-            right: 50px;
+            right: 30px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 60px;
-            opacity: 0.2;
+            width: 60px;
+            height: 60px;
+            background: url('icon-512.png') no-repeat center;
+            background-size: contain;
+            opacity: 0.9;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
         }
         
         .league-name {
@@ -953,6 +963,10 @@
                     <p>P: Pitcher | C: Catcher | 1B/2B/3B: Bases | SS: Shortstop</p>
                     <p>LF/CF/RF: Outfield | BN: Bench</p>
                     <p><strong>Tip:</strong> Auto-save is enabled - changes save automatically!</p>
+                    <div style="margin-top: 15px; display: flex; justify-content: center; gap: 15px; align-items: center;">
+                        <img src="icon-192.png" alt="Yard Goats Logo" style="width: 40px; height: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                        <span style="color: #ffd700; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Yard Goats Baseball</span>
+                    </div>
                 </div>
             </div>
             
@@ -1800,11 +1814,24 @@
             ctx.font = `bold ${smallFontSize}px Arial`;
             ctx.fillText('SMYRNA LITTLE LEAGUE', size * 0.5, size * 0.042);
             
-            // Add goat emoji decorations
-            const emojiFontSize = Math.floor(size * 0.042);
-            ctx.font = `${emojiFontSize}px serif`;
-            ctx.fillText('🐐', size * 0.167, size * 0.083);
-            ctx.fillText('🐐', size * 0.833, size * 0.083);
+            // Add app icon decoration in center of outfield
+            const iconSize = Math.floor(size * 0.08);
+            const iconX = size * 0.5 - iconSize / 2;
+            const iconY = size * 0.15;
+            
+            // Draw a circular background for the icon
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, iconY + iconSize / 2, iconSize * 0.6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Note: Icons would be drawn here if we had canvas image loading
+            // For now, we'll use a placeholder baseball diamond symbol
+            ctx.fillStyle = 'rgba(27, 58, 107, 0.5)';
+            ctx.font = `bold ${iconSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚾', size * 0.5, iconY + iconSize / 2);
             
             ctx.restore();
         }
