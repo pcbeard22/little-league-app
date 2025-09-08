@@ -484,7 +484,8 @@
                 margin: 0 15px;
             }
             
-            .card-name input {
+            .card-name input,
+            .mobile-player-select {
                 width: 100%;
                 padding: 10px;
                 border: 1px solid #ddd;
@@ -1138,6 +1139,21 @@
             console.log('Firebase not configured - using local storage only');
         }
         
+        // Team roster - sorted alphabetically for easier selection
+        const teamRoster = [
+            "Aden Cobb",
+            "Alex Carpenter",
+            "Atlas Pietrusza",
+            "Blake Thomas",
+            "Cooper Corley",
+            "Holden Lawder",
+            "Hudson Beard",
+            "Olyvar Williams",
+            "Rodney Covington",
+            "Ward Houvinen",
+            "Zion Mattox"
+        ];
+        
         // Initial player data
         let playerData = [
             { name: "Atlas Pietrusza", positions: ["CF", "3B", "3B", "P", "BN"] },
@@ -1146,9 +1162,9 @@
             { name: "Cooper Corley", positions: ["1B", "SS", "P", "SS", "BN"] },
             { name: "Alex Carpenter", positions: ["P", "1B", "CF", "CF", "BN"] },
             { name: "Zion Mattox", positions: ["2B", "LF", "1B", "2B", "BN"] },
-            { name: "Hudson Beaard", positions: ["3B", "CF", "2B", "RF", "BN"] },
+            { name: "Hudson Beard", positions: ["3B", "CF", "2B", "RF", "BN"] },
             { name: "Olyvar Williams", positions: ["LF", "BN", "C", "C", "BN"] },
-            { name: "Ward Huovinen", positions: ["RF", "2B", "LF", "BN", "BN"] },
+            { name: "Ward Houvinen", positions: ["RF", "2B", "LF", "BN", "BN"] },
             { name: "Aden Cobb", positions: ["BN", "RF", "RF", "LF", "BN"] },
             { name: "Blake Thomas", positions: ["BN", "BN", "BN", "BN", "BN"] }
         ];
@@ -1797,21 +1813,55 @@
                 orderCell.textContent = index + 1;
                 row.appendChild(orderCell);
                 
-                // Player name cell
+                // Player name cell with dropdown
                 const nameCell = document.createElement('td');
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'player-name-cell';
-                const nameInput = document.createElement('input');
-                nameInput.type = 'text';
-                nameInput.className = 'player-name-input';
-                nameInput.value = player.name;
-                nameInput.placeholder = 'Enter player name';
-                nameInput.addEventListener('input', (e) => {
-                    playerData[index].name = e.target.value;
+                const nameSelect = document.createElement('select');
+                nameSelect.className = 'player-name-input';
+                
+                // Add empty option first
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '-- Select Player --';
+                nameSelect.appendChild(emptyOption);
+                
+                // Add all roster players
+                teamRoster.forEach(playerName => {
+                    const option = document.createElement('option');
+                    option.value = playerName;
+                    option.textContent = playerName;
+                    if (player.name === playerName) {
+                        option.selected = true;
+                    }
+                    nameSelect.appendChild(option);
+                });
+                
+                // Add custom option
+                const customOption = document.createElement('option');
+                customOption.value = 'custom';
+                customOption.textContent = '+ Add Custom Player';
+                nameSelect.appendChild(customOption);
+                
+                nameSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'custom') {
+                        const customName = prompt('Enter player name:');
+                        if (customName && customName.trim()) {
+                            playerData[index].name = customName.trim();
+                            // Recreate the table to show the custom name
+                            createTable();
+                        } else {
+                            // Reset to previous value if cancelled
+                            e.target.value = player.name || '';
+                        }
+                    } else {
+                        playerData[index].name = e.target.value;
+                    }
                     updateField();
                     triggerAutoSave();
                 });
-                nameDiv.appendChild(nameInput);
+                
+                nameDiv.appendChild(nameSelect);
                 nameCell.appendChild(nameDiv);
                 row.appendChild(nameCell);
                 
@@ -1988,10 +2038,15 @@
                     <div class="card-header">
                         <div class="card-order">${index + 1}</div>
                         <div class="card-name">
-                            <input type="text" 
-                                   value="${player.name}" 
-                                   placeholder="Enter player name"
-                                   data-index="${index}">
+                            <select data-index="${index}" class="mobile-player-select">
+                                <option value="">-- Select Player --</option>
+                                ${teamRoster.map(playerName => 
+                                    `<option value="${playerName}" ${player.name === playerName ? 'selected' : ''}>
+                                        ${playerName}
+                                    </option>`
+                                ).join('')}
+                                <option value="custom">+ Add Custom Player</option>
+                            </select>
                         </div>
                         <div class="card-actions">
                             <button class="card-move-up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
@@ -2054,9 +2109,20 @@
                 `;
                 
                 // Add event listeners
-                const nameInput = card.querySelector('.card-name input');
-                nameInput.addEventListener('input', (e) => {
-                    playerData[index].name = e.target.value;
+                const nameSelect = card.querySelector('.mobile-player-select');
+                nameSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'custom') {
+                        const customName = prompt('Enter player name:');
+                        if (customName && customName.trim()) {
+                            playerData[index].name = customName.trim();
+                            createMobileCards(); // Recreate to show custom name
+                        } else {
+                            // Reset to previous value if cancelled
+                            e.target.value = playerData[index].name || '';
+                        }
+                    } else {
+                        playerData[index].name = e.target.value;
+                    }
                     updateField();
                     triggerAutoSave();
                 });
