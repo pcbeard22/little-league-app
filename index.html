@@ -1714,12 +1714,12 @@
             
             // Prepare share text
             const shareTitle = `${gameName} - Little League Lineup`;
-            const shareText = `Check out my lineup, ${gameName}:\n\n`;
+            const shareMessage = `Check out my lineup, ${gameName}:\n${shareUrl}`;
             
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
                 navigator.share({
-                    text: `${shareText}${shareUrl}`
+                    text: shareMessage
                 })
                 .then(() => {
                     console.log('Successfully shared');
@@ -1727,17 +1727,18 @@
                 .catch((error) => {
                     // User cancelled or error occurred
                     if (error.name !== 'AbortError') {
-                        showShareOptions(shareUrl, shareTitle, shareText);
+                        showShareOptions(shareUrl, shareTitle, gameName);
                     }
                 });
             } else {
                 // Desktop or no Web Share API - show custom share options
-                showShareOptions(shareUrl, shareTitle, shareText);
+                showShareOptions(shareUrl, shareTitle, gameName);
             }
         }
         
         // Show custom share options (email, text, copy)
-        function showShareOptions(shareUrl, shareTitle, shareText) {
+        function showShareOptions(shareUrl, shareTitle, gameName) {
+            const shareText = `Check out my lineup, ${gameName}: ${shareUrl}`;
             // Create modal for share options
             const modal = document.createElement('div');
             modal.className = 'share-modal';
@@ -1745,10 +1746,10 @@
                 <div class="share-modal-content">
                     <h3>Share Lineup</h3>
                     <div class="share-options">
-                        <button onclick="shareViaEmail('${encodeURIComponent(shareTitle)}', '${encodeURIComponent(shareText + shareUrl)}')" class="share-option-btn">
+                        <button onclick="shareViaEmail('${encodeURIComponent(shareTitle)}', '${encodeURIComponent(shareText)}')" class="share-option-btn">
                             <span>Email</span>
                         </button>
-                        <button onclick="shareViaSMS('${encodeURIComponent(shareText + shareUrl)}')" class="share-option-btn">
+                        <button onclick="shareViaSMS('${encodeURIComponent(shareText)}')" class="share-option-btn">
                             <span>Text Message</span>
                         </button>
                         <button onclick="copyShareLink('${shareUrl}')" class="share-option-btn">
