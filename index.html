@@ -1719,7 +1719,7 @@
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
                 navigator.share({
-                    text: shareText + shareUrl
+                    text: `${shareText}${shareUrl}`
                 })
                 .then(() => {
                     console.log('Successfully shared');
@@ -1830,9 +1830,13 @@
         
         // Share via SMS
         function shareViaSMS(text) {
+            // Decode the text since it's already encoded when passed in
+            const decodedText = decodeURIComponent(text);
+            // Re-encode for the SMS URL
+            const encodedText = encodeURIComponent(decodedText);
             // Check if on iOS or Android for proper SMS link
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            const smsLink = isIOS ? `sms:&body=${text}` : `sms:?body=${text}`;
+            const smsLink = isIOS ? `sms:&body=${encodedText}` : `sms:?body=${encodedText}`;
             window.location.href = smsLink;
             closeShareModal();
         }
