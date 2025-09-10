@@ -1712,13 +1712,12 @@
                 }
             }
             
-            // Prepare share text
-            const shareTitle = `${gameName} - Little League Lineup`;
-            
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
-                // Try with plain text to avoid encoding issues
-                const plainText = gameName + ' lineup: ' + shareUrl;
+                // Trim any whitespace and use plain text
+                const trimmedName = gameName.trim();
+                const trimmedUrl = shareUrl.trim();
+                const plainText = trimmedName + ' lineup: ' + trimmedUrl;
                 navigator.share({
                     text: plainText
                 })
@@ -1728,17 +1727,18 @@
                 .catch((error) => {
                     // User cancelled or error occurred
                     if (error.name !== 'AbortError') {
-                        showShareOptions(shareUrl, shareTitle, gameName);
+                        showShareOptions(shareUrl, gameName);
                     }
                 });
             } else {
                 // Desktop or no Web Share API - show custom share options
-                showShareOptions(shareUrl, shareTitle, gameName);
+                showShareOptions(shareUrl, gameName);
             }
         }
         
         // Show custom share options (email, text, copy)
-        function showShareOptions(shareUrl, shareTitle, gameName) {
+        function showShareOptions(shareUrl, gameName) {
+            const shareTitle = `${gameName} - Little League Lineup`;
             const shareText = `Check out my lineup, ${gameName}: ${shareUrl}`;
             // Create modal for share options
             const modal = document.createElement('div');
