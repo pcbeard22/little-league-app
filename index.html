@@ -1124,9 +1124,13 @@
             
             // Listen for auth changes
             auth.onAuthStateChanged((user) => {
-                currentUser = user;
+                // Use a shared team ID instead of individual user IDs
+                // This allows all devices to access the same games
+                currentUser = {
+                    uid: 'smyrna_yard_goats_team' // Shared team ID
+                };
                 if (user) {
-                    console.log('User ID:', user.uid);
+                    console.log('Connected to team database');
                     updateSaveStatus('cloud');
                 }
             });
@@ -1394,7 +1398,7 @@
                 name: gameName,
                 players: playerData,
                 savedAt: new Date().toISOString(),
-                userId: currentUser ? currentUser.uid : 'local'
+                userId: 'smyrna_yard_goats_team' // Always use team ID
             };
             
             updateSaveStatus('saving');
@@ -1750,10 +1754,10 @@
             modal.style.display = 'block';
             
             // Try to load from Firebase first
-            if (db && currentUser) {
+            if (db) {
                 try {
                     const snapshot = await db.collection('games')
-                        .where('userId', '==', currentUser.uid)
+                        .where('userId', '==', 'smyrna_yard_goats_team')
                         .orderBy('savedAt', 'desc')
                         .get();
                     
