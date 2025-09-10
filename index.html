@@ -202,6 +202,29 @@
             align-items: center;
         }
         
+        /* Mobile 2x2 Grid Layout for Buttons */
+        @media (max-width: 768px) {
+            .game-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
+                gap: 10px;
+                width: 100%;
+            }
+            
+            /* Reorder buttons for mobile */
+            #loadGameBtn { order: 1; } /* My Games - top left */
+            #newGameBtn { order: 2; } /* New Game - top right */
+            #saveGameBtn { order: 3; } /* Save Lineup - bottom left */
+            #shareGameBtn { order: 4; } /* Share - bottom right */
+            
+            .control-btn {
+                width: 100%;
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+        }
+        
         .control-btn {
             padding: 8px 12px;
             background: white;
@@ -222,34 +245,55 @@
         }
         
         .control-btn.primary {
-            background: linear-gradient(135deg, #1b3a6b 0%, #4fb3b9 100%);
+            background: #2563eb;
             color: white;
-            border: none;
+            border: 2px solid #2563eb;
         }
         
         .control-btn.primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(79, 179, 185, 0.4);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
         }
         
-        .control-btn.danger {
-            border-color: #d9534f;
-            color: #d9534f;
-        }
-        
-        .control-btn.danger:hover {
-            background: #d9534f;
+        .control-btn.secondary {
+            background: #6b7280;
             color: white;
+            border: 2px solid #6b7280;
+        }
+        
+        .control-btn.secondary:hover {
+            background: #4b5563;
+            border-color: #4b5563;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
         }
         
         .control-btn.success {
-            border-color: #5cb85c;
-            color: #5cb85c;
+            background: #10b981;
+            color: white;
+            border: 2px solid #10b981;
         }
         
         .control-btn.success:hover {
-            background: #5cb85c;
+            background: #059669;
+            border-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .control-btn.info {
+            background: white;
+            color: #1b3a6b;
+            border: 2px solid #1b3a6b;
+        }
+        
+        .control-btn.info:hover {
+            background: #1b3a6b;
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27, 58, 107, 0.3);
         }
         
         /* Save status removed - auto-saving happens silently */
@@ -1006,8 +1050,8 @@
             </div>
             <div class="game-buttons">
                 <button id="saveGameBtn" class="control-btn primary">Save Lineup</button>
-                <button id="loadGameBtn" class="control-btn">My Games</button>
-                <button id="shareGameBtn" class="control-btn">Share</button>
+                <button id="loadGameBtn" class="control-btn secondary">My Games</button>
+                <button id="shareGameBtn" class="control-btn info">Share</button>
                 <button id="newGameBtn" class="control-btn success">New Game</button>
             </div>
         </div>
