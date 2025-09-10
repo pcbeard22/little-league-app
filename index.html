@@ -1719,9 +1719,7 @@
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
                 navigator.share({
-                    title: shareTitle,
-                    text: shareText,
-                    url: shareUrl
+                    text: shareText + shareUrl
                 })
                 .then(() => {
                     console.log('Successfully shared');
