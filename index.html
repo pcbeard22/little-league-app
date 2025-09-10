@@ -1714,7 +1714,7 @@
             
             // Prepare share text
             const shareTitle = `${gameName} - Little League Lineup`;
-            const shareText = `Check out my lineup, ${gameName}: `;
+            const shareText = `Check out my lineup, ${gameName}:\n\n`;
             
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
@@ -1832,8 +1832,8 @@
         function shareViaSMS(text) {
             // Decode the text since it's already encoded when passed in
             const decodedText = decodeURIComponent(text);
-            // Use minimal encoding - only encode spaces to avoid URL breaking visually
-            const encodedText = decodedText.replace(/ /g, '%20');
+            // Encode for SMS - preserve newlines for better formatting
+            const encodedText = encodeURIComponent(decodedText);
             // Check if on iOS or Android for proper SMS link
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
             const smsLink = isIOS ? `sms:&body=${encodedText}` : `sms:?body=${encodedText}`;
