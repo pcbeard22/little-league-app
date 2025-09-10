@@ -1832,8 +1832,8 @@
         function shareViaSMS(text) {
             // Decode the text since it's already encoded when passed in
             const decodedText = decodeURIComponent(text);
-            // Re-encode for the SMS URL
-            const encodedText = encodeURIComponent(decodedText);
+            // Use minimal encoding - only encode spaces to avoid URL breaking visually
+            const encodedText = decodedText.replace(/ /g, '%20');
             // Check if on iOS or Android for proper SMS link
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
             const smsLink = isIOS ? `sms:&body=${encodedText}` : `sms:?body=${encodedText}`;
