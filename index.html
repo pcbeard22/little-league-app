@@ -23,7 +23,7 @@
         // If that fails, use the production config below
         var firebaseConfig = null;
     </script>
-    <script src="firebase-config.js" onerror="console.log('Local firebase-config.js not found, using production config')"></script>
+    <script src="firebase-config.js" onerror="// Using production config"></script>
     
     <style>
         * {
@@ -242,31 +242,17 @@
             color: white;
         }
         
-        .save-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 15px;
-            background: white;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #666;
-            border: 2px solid #e0e0e0;
+        .control-btn.success {
+            border-color: #5cb85c;
+            color: #5cb85c;
         }
         
-        .save-status.saving {
-            border-color: #ffd700;
-            color: #b8860b;
+        .control-btn.success:hover {
+            background: #5cb85c;
+            color: white;
         }
         
-        .save-status.saved {
-            border-color: #4fb3b9;
-            color: #1b3a6b;
-        }
-        
-        .save-status .status-icon {
-            font-size: 18px;
-        }
+        /* Save status removed - auto-saving happens silently */
         
         .content {
             display: grid;
@@ -1019,14 +1005,10 @@
                 <input type="text" id="gameName" class="game-name-input" placeholder="Enter game name..." value="Yard Goats Game 1">
             </div>
             <div class="game-buttons">
-                <button id="saveGameBtn" class="control-btn primary">☁️ Save to Cloud</button>
-                <button id="loadGameBtn" class="control-btn">📂 My Games</button>
-                <button id="shareGameBtn" class="control-btn">🔗 Share</button>
-                <button id="newGameBtn" class="control-btn danger">🔄 New Game</button>
-                <div class="save-status" id="saveStatus">
-                    <span class="status-icon">✓</span>
-                    <span class="status-text">Ready</span>
-                </div>
+                <button id="saveGameBtn" class="control-btn primary">Save Lineup</button>
+                <button id="loadGameBtn" class="control-btn">My Games</button>
+                <button id="shareGameBtn" class="control-btn">Share</button>
+                <button id="newGameBtn" class="control-btn success">New Game</button>
             </div>
         </div>
         
@@ -1128,9 +1110,9 @@
             db = firebase.firestore();
             auth = firebase.auth();
             
-            // Enable offline persistence
-            db.enablePersistence().catch((err) => {
-                console.log('Offline persistence failed:', err);
+            // Enable offline persistence (using new method to avoid deprecation warning)
+            firebase.firestore().settings({
+                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
             });
             
             // Sign in anonymously automatically
@@ -1475,31 +1457,10 @@
         }
         
         function updateSaveStatus(status) {
-            const saveStatus = document.getElementById('saveStatus');
-            const statusIcon = saveStatus.querySelector('.status-icon');
-            const statusText = saveStatus.querySelector('.status-text');
-            
-            switch(status) {
-                case 'saving':
-                    saveStatus.className = 'save-status saving';
-                    statusIcon.textContent = '⏳';
-                    statusText.textContent = 'Saving...';
-                    break;
-                case 'saved':
-                    saveStatus.className = 'save-status saved';
-                    statusIcon.textContent = '✓';
-                    statusText.textContent = db ? 'Cloud Saved' : 'Local Saved';
-                    break;
-                case 'error':
-                    saveStatus.className = 'save-status';
-                    statusIcon.textContent = '⚠️';
-                    statusText.textContent = 'Error';
-                    break;
-                case 'cloud':
-                    saveStatus.className = 'save-status saved';
-                    statusIcon.textContent = '☁️';
-                    statusText.textContent = 'Cloud Ready';
-                    break;
+            // Status updates now happen silently in the background
+            // No visual indicator needed - auto-save happens automatically
+            if (status === 'error') {
+                console.error('Save error occurred');
             }
         }
         
@@ -1569,7 +1530,7 @@
             reader.readAsText(file);
         }
         
-        // Generate shareable link
+        // Generate shareable link with multiple sharing options
         function shareGame() {
             const gameName = document.getElementById('gameName').value || 'Unnamed Game';
             const gameData = {
@@ -1588,18 +1549,154 @@
             
             // Check if URL is too long
             if (shareUrl.length > 2000) {
-                alert('Game data is too large to share via link. Please use Export instead.');
+                alert('Game data is too large to share via link. Please save to cloud instead.');
                 return;
             }
             
-            // Copy to clipboard
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                updateSaveStatus('saved');
-                alert('Share link copied to clipboard! Send this link to access your game on any device.');
+            // Prepare share text
+            const shareTitle = `${gameName} - Little League Lineup`;
+            const shareText = `Check out my Little League lineup for ${gameName}!\n\n`;
+            
+            // Check if Web Share API is available (mobile devices)
+            if (navigator.share) {
+                navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl
+                })
+                .then(() => {
+                    console.log('Successfully shared');
+                })
+                .catch((error) => {
+                    // User cancelled or error occurred
+                    if (error.name !== 'AbortError') {
+                        showShareOptions(shareUrl, shareTitle, shareText);
+                    }
+                });
+            } else {
+                // Desktop or no Web Share API - show custom share options
+                showShareOptions(shareUrl, shareTitle, shareText);
+            }
+        }
+        
+        // Show custom share options (email, text, copy)
+        function showShareOptions(shareUrl, shareTitle, shareText) {
+            // Create modal for share options
+            const modal = document.createElement('div');
+            modal.className = 'share-modal';
+            modal.innerHTML = `
+                <div class="share-modal-content">
+                    <h3>Share Lineup</h3>
+                    <div class="share-options">
+                        <button onclick="shareViaEmail('${encodeURIComponent(shareTitle)}', '${encodeURIComponent(shareText + shareUrl)}')" class="share-option-btn">
+                            <span>Email</span>
+                        </button>
+                        <button onclick="shareViaSMS('${encodeURIComponent(shareText + shareUrl)}')" class="share-option-btn">
+                            <span>Text Message</span>
+                        </button>
+                        <button onclick="copyShareLink('${shareUrl}')" class="share-option-btn">
+                            <span>Copy Link</span>
+                        </button>
+                    </div>
+                    <button onclick="closeShareModal()" class="close-share-btn">Cancel</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Add styles for modal
+            const style = document.createElement('style');
+            style.textContent = `
+                .share-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                }
+                .share-modal-content {
+                    background: white;
+                    border-radius: 15px;
+                    padding: 25px;
+                    max-width: 400px;
+                    width: 90%;
+                }
+                .share-modal-content h3 {
+                    margin-bottom: 20px;
+                    color: #1b3a6b;
+                }
+                .share-options {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+                .share-option-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 15px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 10px;
+                    background: white;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    font-size: 16px;
+                    font-weight: 500;
+                }
+                .share-option-btn:hover {
+                    border-color: #4fb3b9;
+                    background: #f0f8ff;
+                }
+                .close-share-btn {
+                    width: 100%;
+                    padding: 12px;
+                    border: none;
+                    border-radius: 8px;
+                    background: #f0f0f0;
+                    cursor: pointer;
+                    font-size: 16px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Share via Email
+        function shareViaEmail(subject, body) {
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            closeShareModal();
+        }
+        
+        // Share via SMS
+        function shareViaSMS(text) {
+            // Check if on iOS or Android for proper SMS link
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const smsLink = isIOS ? `sms:&body=${text}` : `sms:?body=${text}`;
+            window.location.href = smsLink;
+            closeShareModal();
+        }
+        
+        // Copy link to clipboard
+        function copyShareLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+                closeShareModal();
             }).catch(() => {
-                // Fallback for older browsers
-                prompt('Copy this link to share your game:', shareUrl);
+                prompt('Copy this link:', url);
+                closeShareModal();
             });
+        }
+        
+        // Close share modal
+        function closeShareModal() {
+            const modal = document.querySelector('.share-modal');
+            if (modal) {
+                modal.remove();
+            }
         }
         
         // Load game from URL parameters
