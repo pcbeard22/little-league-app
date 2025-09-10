@@ -1714,12 +1714,12 @@
             
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
-                // Trim any whitespace and use plain text
+                // Try title and URL separately to see if iOS handles it better
                 const trimmedName = gameName.trim();
                 const trimmedUrl = shareUrl.trim();
-                const plainText = trimmedName + ' lineup: ' + trimmedUrl;
                 navigator.share({
-                    text: plainText
+                    title: trimmedName + ' lineup',
+                    url: trimmedUrl
                 })
                 .then(() => {
                     console.log('Successfully shared');
