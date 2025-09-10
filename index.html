@@ -1995,20 +1995,50 @@
             }
         }
         
-        function deleteSavedGame(index) {
+        async function deleteSavedGame(index) {
+            // Get the current list of games (from Firebase or localStorage)
             let savedGames = [];
-            try {
-                savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
-            } catch(e) {
-                savedGames = [];
-            }
             
-            const gameName = savedGames[index].name;
-            
-            if (confirm(`Are you sure you want to delete "${gameName}"?`)) {
-                savedGames.splice(index, 1);
-                localStorage.setItem('baseballGames', JSON.stringify(savedGames));
-                showSavedGames(); // Refresh the list
+            // Try to load from Firebase first
+            if (db) {
+                try {
+                    const snapshot = await db.collection('games')
+                        .where('userId', '==', 'smyrna_yard_goats_team')
+                        .orderBy('savedAt', 'desc')
+                        .get();
+                    
+                    savedGames = [];
+                    snapshot.forEach(doc => {
+                        savedGames.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Delete from Firebase
+                    if (savedGames[index]) {
+                        const gameName = savedGames[index].name;
+                        if (confirm(`Are you sure you want to delete "${gameName}"?`)) {
+                            await db.collection('games').doc(savedGames[index].id).delete();
+                            showSavedGames(); // Refresh the list
+                        }
+                    }
+                } catch(error) {
+                    console.error('Firebase delete error:', error);
+                }
+            } else {
+                // Use localStorage if Firebase not available
+                try {
+                    savedGames = JSON.parse(localStorage.getItem('baseballGames') || '[]');
+                } catch(e) {
+                    savedGames = [];
+                }
+                
+                if (savedGames[index]) {
+                    const gameName = savedGames[index].name;
+                    if (confirm(`Are you sure you want to delete "${gameName}"?`)) {
+                        savedGames.splice(index, 1);
+                        localStorage.setItem('baseballGames', JSON.stringify(savedGames));
+                        showSavedGames(); // Refresh the list
+                    }
+                }
             }
         }
         
