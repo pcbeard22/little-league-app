@@ -1717,9 +1717,9 @@
             
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
+                const shareText = `${gameName}\n${shareUrl}`;
                 navigator.share({
-                    title: gameName,
-                    url: shareUrl
+                    text: shareText
                 })
                 .then(() => {
                     console.log('Successfully shared');
