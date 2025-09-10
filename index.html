@@ -1717,8 +1717,10 @@
             
             // Check if Web Share API is available (mobile devices)
             if (navigator.share) {
+                // Try with plain text to avoid encoding issues
+                const plainText = gameName + ' lineup: ' + shareUrl;
                 navigator.share({
-                    url: shareUrl
+                    text: plainText
                 })
                 .then(() => {
                     console.log('Successfully shared');
