@@ -1666,7 +1666,7 @@
         }
         
         // Generate shareable link with multiple sharing options
-        function shareGame() {
+        async function shareGame() {
             const gameName = document.getElementById('gameName').value || 'Unnamed Game';
             const gameData = {
                 n: gameName,  // Shortened keys for URL
@@ -1674,18 +1674,42 @@
                 v: '1'
             };
             
-            // Compress the data
-            const jsonStr = JSON.stringify(gameData);
-            const compressed = btoa(encodeURIComponent(jsonStr));
+            let shareUrl;
             
-            // Create the shareable URL
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}?game=${compressed}`;
-            
-            // Check if URL is too long
-            if (shareUrl.length > 2000) {
-                alert('Game data is too large to share via link. Please save to cloud instead.');
-                return;
+            // If Firebase is available, create a short link
+            if (db) {
+                try {
+                    // Save to a 'shared' collection with auto-generated ID
+                    const docRef = await db.collection('shared').add({
+                        name: gameName,
+                        playerData: playerData,
+                        sharedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        version: '1'
+                    });
+                    
+                    // Use the short document ID for the URL
+                    const baseUrl = window.location.origin + window.location.pathname;
+                    shareUrl = `${baseUrl}?s=${docRef.id}`;
+                } catch(error) {
+                    console.error('Error creating share link:', error);
+                    // Fall back to long URL
+                    const jsonStr = JSON.stringify(gameData);
+                    const compressed = btoa(encodeURIComponent(jsonStr));
+                    const baseUrl = window.location.origin + window.location.pathname;
+                    shareUrl = `${baseUrl}?game=${compressed}`;
+                }
+            } else {
+                // Fallback to base64 encoded URL if Firebase not available
+                const jsonStr = JSON.stringify(gameData);
+                const compressed = btoa(encodeURIComponent(jsonStr));
+                const baseUrl = window.location.origin + window.location.pathname;
+                shareUrl = `${baseUrl}?game=${compressed}`;
+                
+                // Check if URL is too long
+                if (shareUrl.length > 2000) {
+                    alert('Game data is too large to share via link. Please save to cloud instead.');
+                    return;
+                }
             }
             
             // Prepare share text
@@ -1835,13 +1859,39 @@
         }
         
         // Load game from URL parameters
-        function loadFromUrl() {
+        async function loadFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const gameData = urlParams.get('game');
+            const shortId = urlParams.get('s');  // Short ID from Firebase
+            const gameData = urlParams.get('game');  // Long base64 data
             
-            if (gameData) {
+            if (shortId && db) {
+                // Load from Firebase using short ID
                 try {
-                    const decoded = decodeURIComponent(atob(gameData));
+                    const doc = await db.collection('shared').doc(shortId).get();
+                    if (doc.exists) {
+                        const data = doc.data();
+                        playerData = data.playerData;
+                        document.getElementById('gameName').value = data.name || 'Shared Game';
+                        createTable();
+                        updateField();
+                        
+                        // Clear URL parameters after loading
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        console.log(`Loaded shared game: ${data.name}`);
+                        autoSaveGame();
+                    } else {
+                        alert('Share link not found or expired.');
+                    }
+                } catch(error) {
+                    console.error('Failed to load shared game:', error);
+                    alert('Unable to load the shared game.');
+                }
+            } else if (gameData) {
+                // Load from long URL
+                try {
+                    // Properly decode the URL-encoded base64 data
+                    const decoded = atob(decodeURIComponent(gameData));
                     const game = JSON.parse(decoded);
                     
                     if (game.p && Array.isArray(game.p)) {
@@ -1850,13 +1900,15 @@
                         createTable();
                         updateField();
                         
-                        // Clear URL parameters
+                        // Clear URL parameters after loading
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        alert(`Loaded shared game: ${game.n}`);
+                        console.log(`Loaded shared game: ${game.n}`);
+                        autoSaveGame();
                     }
                 } catch(error) {
                     console.error('Failed to load shared game:', error);
+                    alert('Unable to load the shared game. The link may be corrupted.');
                 }
             }
         }
