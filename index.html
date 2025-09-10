@@ -1231,12 +1231,21 @@
                 merge: true
             });
             
-            // Sign in anonymously automatically
-            auth.signInAnonymously().then(() => {
-                console.log('Signed in anonymously');
-            }).catch((error) => {
-                console.error('Auth error:', error);
-            });
+            // Sign in anonymously automatically with retry logic
+            const signInWithRetry = (retries = 3) => {
+                auth.signInAnonymously().then(() => {
+                    console.log('Signed in anonymously');
+                }).catch((error) => {
+                    if (retries > 0 && error.code !== 'auth/operation-not-allowed') {
+                        // Retry after a delay
+                        setTimeout(() => signInWithRetry(retries - 1), 1000);
+                    } else if (error.code !== 'auth/operation-not-allowed') {
+                        // Silently handle auth errors but continue app functionality
+                        console.warn('Auth unavailable, continuing in offline mode');
+                    }
+                });
+            };
+            signInWithRetry();
             
             // Listen for auth changes
             auth.onAuthStateChanged((user) => {
