@@ -1676,8 +1676,11 @@
             
             let shareUrl;
             
+            console.log('ShareGame called. Firebase db available:', !!db);
+            
             // If Firebase is available, create a short link
             if (db) {
+                console.log('Attempting to create short link via Firebase...');
                 try {
                     // Save to a 'shared' collection with auto-generated ID
                     const docRef = await db.collection('shared').add({
@@ -1687,11 +1690,15 @@
                         version: '1'
                     });
                     
+                    console.log('Firebase document created with ID:', docRef.id);
+                    
                     // Use the short document ID for the URL
                     const baseUrl = window.location.origin + window.location.pathname;
                     shareUrl = `${baseUrl}?s=${docRef.id}`;
+                    console.log('Short URL created:', shareUrl);
                 } catch(error) {
                     console.error('Error creating share link:', error);
+                    console.log('Falling back to long URL due to error');
                     // Fall back to long URL
                     const jsonStr = JSON.stringify(gameData);
                     const compressed = btoa(encodeURIComponent(jsonStr));
@@ -1699,6 +1706,7 @@
                     shareUrl = `${baseUrl}?game=${compressed}`;
                 }
             } else {
+                console.log('Firebase not available, using long URL');
                 // Fallback to base64 encoded URL if Firebase not available
                 const jsonStr = JSON.stringify(gameData);
                 const compressed = btoa(encodeURIComponent(jsonStr));
@@ -1864,12 +1872,16 @@
             const shortId = urlParams.get('s');  // Short ID from Firebase
             const gameData = urlParams.get('game');  // Long base64 data
             
+            console.log('LoadFromUrl called. ShortId:', shortId, 'Has long data:', !!gameData, 'Firebase db:', !!db);
+            
             if (shortId && db) {
+                console.log('Loading from Firebase with short ID:', shortId);
                 // Load from Firebase using short ID
                 try {
                     const doc = await db.collection('shared').doc(shortId).get();
                     if (doc.exists) {
                         const data = doc.data();
+                        console.log('Document found in Firebase:', data.name);
                         playerData = data.playerData;
                         document.getElementById('gameName').value = data.name || 'Shared Game';
                         createTable();
@@ -1881,6 +1893,7 @@
                         console.log(`Loaded shared game: ${data.name}`);
                         autoSaveGame();
                     } else {
+                        console.log('Document not found in Firebase for ID:', shortId);
                         alert('Share link not found or expired.');
                     }
                 } catch(error) {
@@ -1888,6 +1901,7 @@
                     alert('Unable to load the shared game.');
                 }
             } else if (gameData) {
+                console.log('Loading from long URL');
                 // Load from long URL
                 try {
                     // Properly decode the URL-encoded base64 data
