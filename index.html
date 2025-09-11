@@ -1247,7 +1247,7 @@
             };
             signInWithRetry();
             
-            // Listen for auth changes
+            // Listen for auth changes with error handling
             auth.onAuthStateChanged((user) => {
                 // Use a shared team ID instead of individual user IDs
                 // This allows all devices to access the same games
@@ -1257,7 +1257,22 @@
                 if (user) {
                     console.log('Connected to team database');
                     updateSaveStatus('cloud');
+                    
+                    // Handle token refresh errors
+                    user.getIdToken(true).catch((error) => {
+                        if (error.code === 'auth/network-request-failed' || 
+                            error.code === 'auth/user-token-expired') {
+                            // Silently re-authenticate
+                            auth.signInAnonymously().catch(() => {
+                                // Continue in offline mode
+                                console.log('Auth refresh failed, continuing in offline mode');
+                            });
+                        }
+                    });
                 }
+            }, (error) => {
+                // Auth state change error - continue in offline mode
+                console.log('Auth state monitoring error, continuing in offline mode');
             });
         } else {
             console.log('Firebase not configured - using local storage only');
@@ -1571,11 +1586,21 @@
                         sessionStorage.setItem('sharedDocId', forkRef.id);
                         sessionStorage.setItem('originalSharedName', gameName);
                         
+                        // Generate the new share URL for the fork
+                        const baseUrl = window.location.origin + window.location.pathname;
+                        const newShareUrl = `${baseUrl}?s=${forkRef.id}`;
+                        
+                        // Update the URL to reflect the new fork
+                        window.history.replaceState({}, document.title, newShareUrl);
+                        
                         // Notify user of the fork
                         alert(`Created your own version: "${gameName}"\nYou now have your own share link for this lineup.`);
                         
                         updateSaveStatus('saved');
-                        console.log('Fork created with ID:', forkRef.id);
+                        console.log('🔀 FORK CREATED');
+                        console.log(`  Original: "${originalName}" (ID: ${sharedDocId})`);
+                        console.log(`  Your Fork: "${gameName}" (ID: ${forkRef.id})`);
+                        console.log(`  New Share URL: ${newShareUrl}`);
                         return;
                     }
                 }
