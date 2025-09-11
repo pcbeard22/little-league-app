@@ -1347,10 +1347,10 @@
         }
         
         // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             initializeEventListeners();
-            loadFromUrl(); // Check for shared game in URL first
-            loadFromLocalStorage();
+            await loadFromUrl(); // Check for shared game in URL first
+            loadFromLocalStorage(); // Only loads if not a shared document
             createTable();
             setupCanvas();
             updateField();
@@ -1999,8 +1999,8 @@
                         createTable();
                         updateField();
                         
-                        // Clear URL parameters after loading
-                        window.history.replaceState({}, document.title, window.location.pathname);
+                        // Keep the share ID in URL for refresh/bookmarking
+                        // Don't clear URL parameters for shared documents
                         
                         // Enable auto-save for collaborative documents
                         enableCollaborativeAutoSave(shortId);
@@ -2039,6 +2039,13 @@
         
         // Load from localStorage on startup
         function loadFromLocalStorage() {
+            // Skip loading from localStorage if we're viewing a shared document
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('s')) {
+                console.log('Shared document detected, skipping localStorage load');
+                return;
+            }
+            
             try {
                 const currentGame = localStorage.getItem('currentGame');
                 if (currentGame) {
