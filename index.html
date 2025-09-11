@@ -1545,13 +1545,48 @@
             const gameName = document.getElementById('gameName').value || 'Unnamed Game';
             
             try {
+                // Check if the name has changed
+                const currentDoc = await db.collection('shared').doc(sharedDocId).get();
+                if (currentDoc.exists) {
+                    const currentData = currentDoc.data();
+                    const originalName = sessionStorage.getItem('originalSharedName') || currentData.name;
+                    
+                    // If name changed, create a fork instead of updating
+                    if (gameName !== originalName && gameName !== currentData.name) {
+                        console.log('Name changed - creating a fork of the shared lineup');
+                        
+                        // Create a new shared document (fork)
+                        const forkRef = await db.collection('shared').add({
+                            name: gameName,
+                            playerData: playerData,
+                            sharedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                            version: '1',
+                            collaborative: true,
+                            forkedFrom: sharedDocId,
+                            originalName: originalName
+                        });
+                        
+                        // Update session to use the new fork
+                        sessionStorage.setItem('sharedDocId', forkRef.id);
+                        sessionStorage.setItem('originalSharedName', gameName);
+                        
+                        // Notify user of the fork
+                        alert(`Created your own version: "${gameName}"\nYou now have your own share link for this lineup.`);
+                        
+                        updateSaveStatus('saved');
+                        console.log('Fork created with ID:', forkRef.id);
+                        return;
+                    }
+                }
+                
+                // If name hasn't changed, update positions only
                 await db.collection('shared').doc(sharedDocId).update({
-                    name: gameName,
                     playerData: playerData,
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 updateSaveStatus('saved');
-                console.log('Shared lineup updated');
+                console.log('Shared lineup positions updated');
             } catch (error) {
                 console.error('Failed to update shared document:', error);
                 updateSaveStatus('error');
@@ -1940,21 +1975,22 @@
                         playerData = data.playerData;
                         document.getElementById('gameName').value = data.name || 'Shared Game';
                         
-                        // Store the shared ID for collaborative editing
+                        // Store the shared ID and original name for collaborative editing
                         sessionStorage.setItem('sharedDocId', shortId);
+                        sessionStorage.setItem('originalSharedName', data.name);
                         
                         // Set up real-time listener for collaborative updates
                         if (data.collaborative) {
                             db.collection('shared').doc(shortId).onSnapshot((doc) => {
                                 if (doc.exists) {
                                     const updatedData = doc.data();
-                                    // Only update if the data has changed
+                                    // Only update if the data has changed (positions only, not name)
                                     if (JSON.stringify(updatedData.playerData) !== JSON.stringify(playerData)) {
                                         playerData = updatedData.playerData;
-                                        document.getElementById('gameName').value = updatedData.name;
+                                        // Don't update the name - keep local name changes
                                         createTable();
                                         updateField();
-                                        console.log('Lineup updated by another user');
+                                        console.log('Lineup positions updated by another user');
                                     }
                                 }
                             });
