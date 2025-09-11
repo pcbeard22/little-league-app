@@ -1516,12 +1516,44 @@
                 savedAt: new Date().toISOString()
             };
             
+            // If we're working on a shared document, save to Firebase instead
+            const sharedDocId = sessionStorage.getItem('sharedDocId');
+            if (sharedDocId && db) {
+                saveToSharedDocument(sharedDocId);
+            }
+            
             // Save to localStorage with a special key for current game
             try {
                 localStorage.setItem('currentGame', JSON.stringify(gameData));
                 updateSaveStatus('saved');
             } catch(e) {
                 console.error('Unable to auto-save:', e);
+                updateSaveStatus('error');
+            }
+        }
+        
+        // Enable collaborative auto-save for shared documents
+        function enableCollaborativeAutoSave(sharedDocId) {
+            // Auto-save is already enabled through autoSaveGame function
+            console.log('Collaborative editing enabled for shared document:', sharedDocId);
+        }
+        
+        // Save to shared document for collaborative editing
+        async function saveToSharedDocument(sharedDocId) {
+            if (!db || !sharedDocId) return;
+            
+            const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            
+            try {
+                await db.collection('shared').doc(sharedDocId).update({
+                    name: gameName,
+                    playerData: playerData,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                updateSaveStatus('saved');
+                console.log('Shared lineup updated');
+            } catch (error) {
+                console.error('Failed to update shared document:', error);
                 updateSaveStatus('error');
             }
         }
@@ -1687,21 +1719,40 @@
             };
             
             let shareUrl;
+            let sharedDocId = null;
+            
+            // Check if this game already has a shared ID
+            const existingSharedId = sessionStorage.getItem('sharedDocId');
             
             // If Firebase is available, create a short link
             if (db) {
                 try {
-                    // Save to a 'shared' collection with auto-generated ID
-                    const docRef = await db.collection('shared').add({
-                        name: gameName,
-                        playerData: playerData,
-                        sharedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        version: '1'
-                    });
+                    if (existingSharedId) {
+                        // Update existing shared document
+                        await db.collection('shared').doc(existingSharedId).update({
+                            name: gameName,
+                            playerData: playerData,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        sharedDocId = existingSharedId;
+                    } else {
+                        // Create new shared document for collaborative editing
+                        const docRef = await db.collection('shared').add({
+                            name: gameName,
+                            playerData: playerData,
+                            sharedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                            version: '1',
+                            collaborative: true  // Mark as collaborative
+                        });
+                        sharedDocId = docRef.id;
+                        // Store the shared ID for future updates
+                        sessionStorage.setItem('sharedDocId', sharedDocId);
+                    }
                     
                     // Use the short document ID for the URL
                     const baseUrl = window.location.origin + window.location.pathname;
-                    shareUrl = `${baseUrl}?s=${docRef.id}`;
+                    shareUrl = `${baseUrl}?s=${sharedDocId}`;
                 } catch(error) {
                     console.error('Error creating share link:', error);
                     // Fall back to long URL
@@ -1888,13 +1939,35 @@
                         const data = doc.data();
                         playerData = data.playerData;
                         document.getElementById('gameName').value = data.name || 'Shared Game';
+                        
+                        // Store the shared ID for collaborative editing
+                        sessionStorage.setItem('sharedDocId', shortId);
+                        
+                        // Set up real-time listener for collaborative updates
+                        if (data.collaborative) {
+                            db.collection('shared').doc(shortId).onSnapshot((doc) => {
+                                if (doc.exists) {
+                                    const updatedData = doc.data();
+                                    // Only update if the data has changed
+                                    if (JSON.stringify(updatedData.playerData) !== JSON.stringify(playerData)) {
+                                        playerData = updatedData.playerData;
+                                        document.getElementById('gameName').value = updatedData.name;
+                                        createTable();
+                                        updateField();
+                                        console.log('Lineup updated by another user');
+                                    }
+                                }
+                            });
+                        }
+                        
                         createTable();
                         updateField();
                         
                         // Clear URL parameters after loading
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        autoSaveGame();
+                        // Enable auto-save for collaborative documents
+                        enableCollaborativeAutoSave(shortId);
                     } else {
                         alert('Share link not found or expired.');
                     }
