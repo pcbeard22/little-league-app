@@ -1647,6 +1647,9 @@
                     // Save to Firestore
                     await db.collection('games').doc(`${currentUser.uid}_${gameId}`).set(gameData);
                     
+                    // Track successful save
+                    sessionStorage.setItem('lastSavedGameName', gameName);
+                    
                     // Also save to localStorage as backup
                     localStorage.setItem('currentGame', JSON.stringify(gameData));
                     
@@ -1772,6 +1775,31 @@
         // Generate shareable link with multiple sharing options
         async function shareGame() {
             const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            
+            // Check if game name is empty or default
+            if (!gameName || gameName === 'Unnamed Game') {
+                alert('Please enter a game name before sharing.');
+                document.getElementById('gameName').focus();
+                return;
+            }
+            
+            // Check if we're working on a local game that needs saving
+            const isLocalGame = !sessionStorage.getItem('sharedDocId');
+            const hasBeenSaved = sessionStorage.getItem('lastSavedGameName') === gameName;
+            
+            // Auto-save local games before sharing
+            if (isLocalGame && !hasBeenSaved && db && currentUser) {
+                console.log('📁 Auto-saving game before sharing...');
+                await saveGame();
+                // Mark as saved
+                sessionStorage.setItem('lastSavedGameName', gameName);
+                // Wait a moment for save to complete
+                await new Promise(resolve => setTimeout(resolve, 500));
+                console.log('✅ Game saved to Firebase');
+            } else if (isLocalGame && !db) {
+                console.log('⚠️ Sharing local game without Firebase backup');
+            }
+            
             const gameData = {
                 n: gameName,  // Shortened keys for URL
                 p: playerData,
@@ -1797,17 +1825,20 @@
                         sharedDocId = existingSharedId;
                     } else {
                         // Create new shared document for collaborative editing
+                        console.log('📤 Creating new shared document...');
                         const docRef = await db.collection('shared').add({
                             name: gameName,
                             playerData: playerData,
                             sharedAt: firebase.firestore.FieldValue.serverTimestamp(),
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
                             version: '1',
-                            collaborative: true  // Mark as collaborative
+                            collaborative: true,  // Mark as collaborative
+                            sourceGame: isLocalGame ? `${currentUser.uid}_${gameName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}` : null
                         });
                         sharedDocId = docRef.id;
                         // Store the shared ID for future updates
                         sessionStorage.setItem('sharedDocId', sharedDocId);
+                        console.log(`✅ Shared document created with ID: ${sharedDocId}`);
                     }
                     
                     // Use the short document ID for the URL
