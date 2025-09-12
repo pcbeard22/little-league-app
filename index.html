@@ -110,6 +110,32 @@
         @media (max-width: 768px) {
             body {
                 padding: 8px;
+                /* Improve mobile scrolling */
+                -webkit-overflow-scrolling: touch;
+                overflow-scrolling: touch;
+            }
+            
+            /* Make content area scrollable on mobile */
+            .content {
+                overflow-y: visible;
+                /* Remove height constraints for natural scrolling */
+                min-height: auto;
+            }
+            
+            /* Improve table scrolling on mobile */
+            .table-section {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+                /* Add some padding to make it easier to grab */
+                padding: 10px 5px;
+                margin: -10px -5px;
+            }
+            
+            /* Make mobile cards scrollable */
+            #mobileCards {
+                -webkit-overflow-scrolling: touch;
+                overflow-y: visible;
             }
         }
         
@@ -511,6 +537,8 @@
         .table-section {
             overflow-x: auto;
             position: relative;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            overscroll-behavior-x: contain; /* Prevent scroll chaining */
         }
         
         .table-section::-webkit-scrollbar {
