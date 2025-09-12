@@ -1614,9 +1614,6 @@
                         // Update the URL to reflect the new fork
                         window.history.replaceState({}, document.title, newShareUrl);
                         
-                        // Notify user of the fork
-                        alert(`Created your own version: "${gameName}"\nYou now have your own share link for this lineup.`);
-                        
                         updateSaveStatus('saved');
                         console.log('🔀 FORK CREATED');
                         console.log(`  Original: "${originalName}" (ID: ${sharedDocId})`);
