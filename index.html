@@ -1390,6 +1390,15 @@
             // Game name input with auto-save
             document.getElementById('gameName').addEventListener('input', triggerAutoSave);
             
+            // Handle name changes for forking ONLY when user finishes typing
+            document.getElementById('gameName').addEventListener('blur', () => {
+                const sharedDocId = sessionStorage.getItem('sharedDocId');
+                if (sharedDocId && db) {
+                    // Check for name change and potentially fork
+                    saveToSharedDocument(sharedDocId, false);  // false = check for name changes
+                }
+            });
+            
             // Modal close on outside click
             window.addEventListener('click', (event) => {
                 const modal = document.getElementById('savedGamesModal');
@@ -1531,10 +1540,11 @@
                 savedAt: new Date().toISOString()
             };
             
-            // If we're working on a shared document, save to Firebase instead
+            // If we're working on a shared document, save positions only (not name changes yet)
             const sharedDocId = sessionStorage.getItem('sharedDocId');
             if (sharedDocId && db) {
-                saveToSharedDocument(sharedDocId);
+                // Don't trigger fork on every keystroke - wait for user to finish typing
+                saveToSharedDocument(sharedDocId, true);  // true = positions only
             }
             
             // Save to localStorage with a special key for current game
@@ -1553,11 +1563,20 @@
             console.log('Collaborative editing enabled for shared document:', sharedDocId);
         }
         
+        // Track if we're currently forking to prevent duplicates
+        let isForkingInProgress = false;
+        
         // Save to shared document for collaborative editing
-        async function saveToSharedDocument(sharedDocId) {
+        async function saveToSharedDocument(sharedDocId, positionsOnly = false) {
             if (!db || !sharedDocId) return;
             
             const gameName = document.getElementById('gameName').value || 'Unnamed Game';
+            
+            // Prevent multiple forks while one is in progress
+            if (isForkingInProgress && !positionsOnly) {
+                console.log('Fork already in progress, skipping...');
+                return;
+            }
             
             try {
                 // Check if the name has changed
@@ -1566,8 +1585,10 @@
                     const currentData = currentDoc.data();
                     const originalName = sessionStorage.getItem('originalSharedName') || currentData.name;
                     
-                    // If name changed, create a fork instead of updating
-                    if (gameName !== originalName && gameName !== currentData.name) {
+                    // Only check for name changes if not in positions-only mode
+                    // AND if the name field has lost focus (user finished typing)
+                    if (!positionsOnly && gameName !== originalName && gameName !== currentData.name) {
+                        isForkingInProgress = true;
                         console.log('Name changed - creating a fork of the shared lineup');
                         
                         // Create a new shared document (fork)
@@ -1601,6 +1622,9 @@
                         console.log(`  Original: "${originalName}" (ID: ${sharedDocId})`);
                         console.log(`  Your Fork: "${gameName}" (ID: ${forkRef.id})`);
                         console.log(`  New Share URL: ${newShareUrl}`);
+                        
+                        // Reset fork flag after completion
+                        isForkingInProgress = false;
                         return;
                     }
                 }
