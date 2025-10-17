@@ -1418,6 +1418,13 @@
         document.addEventListener('DOMContentLoaded', async () => {
             initializeEventListeners();
             await loadFromUrl(); // Check for shared game in URL first
+
+            // Auto-load last saved cloud game if available and not loading from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.has('game')) {
+                await autoLoadLastGame();
+            }
+
             loadFromLocalStorage(); // Only loads if not a shared document
             createTable();
             setupCanvas();
@@ -2189,6 +2196,33 @@
         }
         
         // Game Management Functions
+        // Auto-load the most recent cloud game on page load
+        async function autoLoadLastGame() {
+            if (!db) return; // Only works with Firebase
+
+            try {
+                const snapshot = await db.collection('games')
+                    .where('userId', '==', 'smyrna_yard_goats_team')
+                    .orderBy('savedAt', 'desc')
+                    .limit(1)
+                    .get();
+
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    const game = doc.data();
+
+                    // Load the game data
+                    playerData = JSON.parse(JSON.stringify(game.players)); // Deep copy
+                    document.getElementById('gameName').value = game.name;
+
+                    console.log('Auto-loaded last game:', game.name);
+                }
+            } catch(error) {
+                console.error('Error auto-loading last game:', error);
+                // Fail silently - will fall back to localStorage or blank game
+            }
+        }
+
         async function showSavedGames() {
             const modal = document.getElementById('savedGamesModal');
             const savedGamesList = document.getElementById('savedGamesList');
