@@ -8,7 +8,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
   Timestamp,
 } from 'firebase/firestore';
 
@@ -37,6 +36,23 @@ function docId(gameId: string): string {
   return `${TEAM_ID}_${gameId}`;
 }
 
+// ---------------------------------------------------------------------------
+// Firestore can't store nested arrays (string[][]).
+// Flatten to a JSON string on save, parse back on load.
+// ---------------------------------------------------------------------------
+function flattenPositions(positions: string[][]): string {
+  return JSON.stringify(positions);
+}
+
+function unflattenPositions(raw: unknown): string[][] {
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return []; }
+  }
+  // Backwards compat: if somehow stored as array, return as-is
+  if (Array.isArray(raw)) return raw as string[][];
+  return [];
+}
+
 /** Save a lineup (create or update) */
 export async function saveLineup(
   lineup: Omit<SavedLineup, 'savedAt' | 'updatedAt'>,
@@ -53,7 +69,7 @@ export async function saveLineup(
     gameName: lineup.gameName,
     gameDate: lineup.gameDate,
     battingOrder: lineup.battingOrder,
-    positionsByInning: lineup.positionsByInning,
+    positionsByInning: flattenPositions(lineup.positionsByInning),
     absentPlayers: lineup.absentPlayers,
     gameNotes: lineup.gameNotes,
     updatedAt: now,
@@ -81,7 +97,7 @@ export async function loadLineup(gameId: string): Promise<SavedLineup | null> {
     gameName: d.gameName,
     gameDate: d.gameDate,
     battingOrder: d.battingOrder,
-    positionsByInning: d.positionsByInning,
+    positionsByInning: unflattenPositions(d.positionsByInning),
     absentPlayers: d.absentPlayers ?? [],
     gameNotes: d.gameNotes ?? '',
     savedAt: d.savedAt?.toDate?.() ?? new Date(),
@@ -93,27 +109,31 @@ export async function loadLineup(gameId: string): Promise<SavedLineup | null> {
 export async function loadAllLineups(): Promise<SavedLineup[]> {
   await ensureAuth();
 
+  // Simple query without orderBy to avoid needing a composite index
   const q = query(
     collection(db, 'lineups'),
     where('teamId', '==', TEAM_ID),
-    orderBy('updatedAt', 'desc'),
   );
 
   const snap = await getDocs(q);
-  return snap.docs.map((docSnap) => {
+  const lineups = snap.docs.map((docSnap) => {
     const d = docSnap.data();
     return {
       id: d.id,
       gameName: d.gameName,
       gameDate: d.gameDate,
       battingOrder: d.battingOrder,
-      positionsByInning: d.positionsByInning,
+      positionsByInning: unflattenPositions(d.positionsByInning),
       absentPlayers: d.absentPlayers ?? [],
       gameNotes: d.gameNotes ?? '',
       savedAt: d.savedAt?.toDate?.() ?? new Date(),
       updatedAt: d.updatedAt?.toDate?.() ?? new Date(),
     };
   });
+
+  // Sort client-side by updatedAt desc
+  lineups.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  return lineups;
 }
 
 /** Delete a lineup */
