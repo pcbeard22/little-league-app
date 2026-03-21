@@ -136,6 +136,13 @@ export async function loadAllLineups(): Promise<SavedLineup[]> {
   return lineups;
 }
 
+/** Rename a saved lineup */
+export async function renameLineup(gameId: string, newName: string): Promise<void> {
+  await ensureAuth();
+  const ref = doc(db, 'lineups', docId(gameId));
+  await setDoc(ref, { gameName: newName, updatedAt: Timestamp.now() }, { merge: true });
+}
+
 /** Delete a lineup */
 export async function deleteLineup(gameId: string): Promise<void> {
   await ensureAuth();

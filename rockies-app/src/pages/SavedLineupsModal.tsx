@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Trash2, ArrowRight, Loader2, Calendar, Clock } from 'lucide-react';
-import { loadAllLineups, deleteLineup, type SavedLineup } from '@/lib/lineup-storage';
+import { X, Trash2, ArrowRight, Loader2, Calendar, Clock, Pencil, Check } from 'lucide-react';
+import { loadAllLineups, deleteLineup, renameLineup, type SavedLineup } from '@/lib/lineup-storage';
 
 interface SavedLineupsModalProps {
   open: boolean;
@@ -12,6 +12,8 @@ export default function SavedLineupsModal({ open, onClose, onLoadLineup }: Saved
   const [lineups, setLineups] = useState<SavedLineup[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
 
   useEffect(() => {
     if (!open) return;
@@ -31,6 +33,26 @@ export default function SavedLineupsModal({ open, onClose, onLoadLineup }: Saved
       console.error('Failed to delete lineup:', err);
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function startEditing(lineup: SavedLineup) {
+    setEditingId(lineup.id);
+    setEditName(lineup.gameName);
+  }
+
+  async function handleSaveRename(gameId: string) {
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+    try {
+      await renameLineup(gameId, trimmed);
+      setLineups((prev) =>
+        prev.map((l) => (l.id === gameId ? { ...l, gameName: trimmed } : l)),
+      );
+    } catch (err) {
+      console.error('Failed to rename lineup:', err);
+    } finally {
+      setEditingId(null);
     }
   }
 
@@ -91,9 +113,45 @@ export default function SavedLineupsModal({ open, onClose, onLoadLineup }: Saved
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-rockies-black truncate">
-                        {lineup.gameName}
-                      </h3>
+                      {editingId === lineup.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="flex-1 text-sm font-bold border border-rockies-purple/30 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-rockies-purple/40"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveRename(lineup.id);
+                              if (e.key === 'Escape') setEditingId(null);
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSaveRename(lineup.id)}
+                            className="p-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="p-1 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 group">
+                          <h3 className="text-sm font-bold text-rockies-black truncate">
+                            {lineup.gameName}
+                          </h3>
+                          <button
+                            onClick={() => startEditing(lineup)}
+                            className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                            title="Rename"
+                          >
+                            <Pencil className="w-3 h-3 text-gray-400" />
+                          </button>
+                        </div>
+                      )}
                       <div className="flex items-center gap-3 mt-1">
                         <span className="flex items-center gap-1 text-xs text-rockies-black/50">
                           <Calendar className="w-3 h-3" />
