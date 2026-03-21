@@ -107,7 +107,7 @@ function SortablePlayerRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
+      className={`grid grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
         isDragging
           ? 'bg-rockies-purple/5 shadow-lg rounded-lg'
           : orderIdx % 2 === 0
@@ -141,7 +141,7 @@ function SortablePlayerRow({
           {p.firstName} {p.lastName}
         </span>
         {obp !== undefined && (
-          <span className="ml-auto shrink-0 tabular-nums flex items-center gap-0.5 bg-rockies-purple/8 rounded px-1.5 py-0.5">
+          <span className="hidden lg:inline-flex ml-auto shrink-0 tabular-nums items-center gap-0.5 bg-rockies-purple/8 rounded px-1.5 py-0.5">
             <span className="text-[10px] font-medium text-rockies-purple/50">OBP</span>
             <span className="text-xs font-bold text-rockies-purple">{obp.toFixed(3).replace(/^0/, '')}</span>
           </span>
@@ -396,7 +396,7 @@ export default function LineupPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left column — baseball field */}
           <div className="w-full lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
-            <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest p-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest p-2 sm:p-4">
               {/* Inning tabs above the field */}
               <InningTabs
                 currentInning={currentInning}
@@ -414,7 +414,7 @@ export default function LineupPage() {
           <div className="w-full lg:w-[55%]">
             <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest overflow-hidden">
               {/* Header row */}
-              <div className="grid grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
+              <div className="grid grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
                 <div className="w-8" />
                 <div className="px-1 py-2">
                   <span className="text-[10px] font-semibold text-rockies-black/40 uppercase">#</span>
@@ -512,29 +512,29 @@ export default function LineupPage() {
 
       {/* Bottom action bar */}
       <div className="fixed bottom-0 inset-x-0 lg:relative lg:bottom-auto bg-white/80 backdrop-blur-lg border-t border-surface-container-highest lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-3">
           <button
             onClick={handleAutoSuggest}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-rockies-purple border border-rockies-purple/20 bg-rockies-purple/5 hover:bg-rockies-purple/10 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-rockies-purple border border-rockies-purple/20 bg-rockies-purple/5 hover:bg-rockies-purple/10 transition-colors"
           >
             <Sparkles className="w-4 h-4" />
-            Auto-Suggest
+            <span className="hidden sm:inline">Auto-Suggest</span>
           </button>
           <button
             onClick={() => setShowLineupsModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-rockies-black/70 border border-surface-container-highest bg-white hover:bg-surface-container-low transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-rockies-black/70 border border-surface-container-highest bg-white hover:bg-surface-container-low transition-colors"
           >
             <FolderOpen className="w-4 h-4" />
-            My Lineups
+            <span className="hidden sm:inline">My Lineups</span>
           </button>
-          <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-rockies-black/70 border border-surface-container-highest bg-white hover:bg-surface-container-low transition-colors">
+          <button className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-rockies-black/70 border border-surface-container-highest bg-white hover:bg-surface-container-low transition-colors">
             <Share2 className="w-4 h-4" />
-            Share
+            <span className="hidden sm:inline">Share</span>
           </button>
           <button
             onClick={handleSave}
             disabled={saveStatus === 'saving'}
-            className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white shadow-md transition-all ${
               saveStatus === 'saved'
                 ? 'bg-green-600 shadow-green-600/25'
                 : 'bg-gradient-to-r from-rockies-purple to-rockies-deep-purple shadow-rockies-purple/25 hover:shadow-lg hover:shadow-rockies-purple/30 hover:brightness-110'
@@ -547,7 +547,7 @@ export default function LineupPage() {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Save Lineup'}
+            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Save'}
           </button>
         </div>
       </div>

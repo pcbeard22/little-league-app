@@ -338,7 +338,7 @@ export default function StatsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-rockies-purple/5 sticky top-0 z-10">
+                <tr className="bg-rockies-purple/5 sticky top-0 z-30">
                   {BATTING_COLUMNS.map((col) => (
                     <th
                       key={col.key}
@@ -347,7 +347,7 @@ export default function StatsPage() {
                         col.key === 'name' || col.key === 'number'
                           ? 'text-rockies-black/70'
                           : 'text-rockies-black/70 cursor-pointer hover:text-rockies-purple select-none'
-                      } ${col.key === 'name' ? 'sticky left-0 bg-rockies-purple/5 z-20 min-w-[120px]' : ''} ${col.key === 'number' ? 'w-8' : ''}`}
+                      } ${col.key === 'number' ? 'sticky left-0 z-30 bg-[#f6f3f9] w-8' : ''} ${col.key === 'name' ? 'sticky left-[32px] z-30 bg-[#f6f3f9] min-w-[120px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]' : ''}`}
                     >
                       <span className="flex items-center gap-1">
                         {col.label}
@@ -367,12 +367,14 @@ export default function StatsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedBatting.map((player, idx) => (
+                {sortedBatting.map((player, idx) => {
+                  const rowBg = idx % 2 === 1 ? '#faf9fc' : '#ffffff';
+                  return (
                   <tr
                     key={player.number}
                     className={`border-t border-rockies-silver/10 ${
-                      idx % 2 === 1 ? 'bg-rockies-purple/[0.02]' : ''
-                    } hover:bg-rockies-purple/5 transition-colors`}
+                      idx % 2 === 1 ? 'bg-[#faf9fc]' : 'bg-white'
+                    } hover:bg-rockies-purple/5 transition-colors group`}
                   >
                     {BATTING_COLUMNS.map((col) => {
                       const raw = col.getValue(player);
@@ -394,18 +396,18 @@ export default function StatsPage() {
                       return (
                         <td
                           key={col.key}
+                          style={col.key === 'number' || col.key === 'name' ? { backgroundColor: rowBg } : undefined}
                           className={`px-3 py-2 whitespace-nowrap ${
                             isBest ? 'text-rockies-purple font-bold' : 'text-rockies-black'
-                          } ${col.key === 'name' ? 'sticky left-0 bg-white z-10 font-medium' : ''} ${
-                            col.key === 'name' && idx % 2 === 1 ? '!bg-rockies-purple/[0.02]' : ''
-                          }`}
+                          } ${col.key === 'number' ? 'sticky left-0 z-10 group-hover:!bg-rockies-purple/5' : ''} ${col.key === 'name' ? 'sticky left-[32px] z-10 font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] group-hover:!bg-rockies-purple/5' : ''}`}
                         >
                           {display}
                         </td>
                       );
                     })}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -421,14 +423,14 @@ export default function StatsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-rockies-purple/5 sticky top-0 z-10">
+                <tr className="bg-rockies-purple/5 sticky top-0 z-30">
                   {PITCHING_COLUMNS.map((col) => (
                     <th
                       key={col.key}
                       onClick={() => handlePitchingSort(col.key)}
                       className={`px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap ${
                         col.key === 'name'
-                          ? 'text-rockies-black/70 min-w-[120px]'
+                          ? 'text-rockies-black/70 sticky left-0 z-30 bg-[#f6f3f9] min-w-[120px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]'
                           : 'text-rockies-black/70 cursor-pointer hover:text-rockies-purple select-none'
                       }`}
                     >
@@ -450,12 +452,14 @@ export default function StatsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedPitching.map((player, idx) => (
+                {sortedPitching.map((player, idx) => {
+                  const rowBg = idx % 2 === 1 ? '#faf9fc' : '#ffffff';
+                  return (
                   <tr
                     key={player.number}
                     className={`border-t border-rockies-silver/10 ${
-                      idx % 2 === 1 ? 'bg-rockies-purple/[0.02]' : ''
-                    } hover:bg-rockies-purple/5 transition-colors`}
+                      idx % 2 === 1 ? 'bg-[#faf9fc]' : 'bg-white'
+                    } hover:bg-rockies-purple/5 transition-colors group`}
                   >
                     {PITCHING_COLUMNS.map((col) => {
                       const raw = col.getValue(player);
@@ -475,16 +479,18 @@ export default function StatsPage() {
                       return (
                         <td
                           key={col.key}
+                          style={col.key === 'name' ? { backgroundColor: rowBg } : undefined}
                           className={`px-4 py-2.5 whitespace-nowrap ${
                             isBest ? 'text-rockies-purple font-bold' : 'text-rockies-black'
-                          } ${col.key === 'name' ? 'font-medium' : ''}`}
+                          } ${col.key === 'name' ? 'sticky left-0 z-10 font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] group-hover:!bg-rockies-purple/5' : ''}`}
                         >
                           {display}
                         </td>
                       );
                     })}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
