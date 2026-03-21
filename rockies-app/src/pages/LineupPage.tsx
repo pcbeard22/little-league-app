@@ -192,62 +192,69 @@ export default function LineupPage() {
   const [gameNotes, setGameNotes] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
 
-  // Default lineup generators
-  const defaultBattingOrder = useCallback(() => players.map((_p, i) => i), [players]);
-  const defaultPositions = useCallback(
-    () =>
-      players.map((_, playerIdx) => {
-        const pos = DEFAULT_POSITIONS[playerIdx] ?? 'BN';
-        return Array.from({ length: TOTAL_INNINGS }, () => pos);
-      }),
-    [players],
-  );
+  // Default lineup generators (stable — no dependency on players ref)
+  function makeDefaultBattingOrder() {
+    return players.map((_p, i) => i);
+  }
+  function makeDefaultPositions() {
+    return players.map((_, playerIdx) => {
+      const pos = DEFAULT_POSITIONS[playerIdx] ?? 'BN';
+      return Array.from({ length: TOTAL_INNINGS }, () => pos);
+    });
+  }
 
   // battingOrder: indices into `players`, kept in order
-  const [battingOrder, setBattingOrder] = useState<number[]>(defaultBattingOrder);
+  const [battingOrder, setBattingOrder] = useState<number[]>(() => makeDefaultBattingOrder());
 
   // positionsByInning[playerIdx][inning] = position string
-  const [positionsByInning, setPositionsByInning] = useState<string[][]>(defaultPositions);
+  const [positionsByInning, setPositionsByInning] = useState<string[][]>(() => makeDefaultPositions());
+
+  // Track which game is loaded to avoid re-fetching
+  const [loadedGameId, setLoadedGameId] = useState<string | null>(null);
 
   // Load saved lineup when game changes
-  const loadGameLineup = useCallback(
-    async (gameId: string) => {
-      setLoadingGame(true);
-      try {
-        const saved = await loadLineup(gameId);
+  useEffect(() => {
+    const game = MOCK_GAMES[currentGameIndex];
+    if (!game || game.id === loadedGameId) return;
+
+    let cancelled = false;
+    setLoadingGame(true);
+
+    loadLineup(game.id)
+      .then((saved) => {
+        if (cancelled) return;
         if (saved) {
           setBattingOrder(saved.battingOrder);
           setPositionsByInning(saved.positionsByInning);
           setGameNotes(saved.gameNotes ?? '');
           if (saved.gameNotes) setNotesOpen(true);
         } else {
-          setBattingOrder(defaultBattingOrder());
-          setPositionsByInning(defaultPositions());
+          setBattingOrder(makeDefaultBattingOrder());
+          setPositionsByInning(makeDefaultPositions());
           setGameNotes('');
         }
-      } catch (err) {
+        setLoadedGameId(game.id);
+      })
+      .catch((err) => {
+        if (cancelled) return;
         console.error('Failed to load lineup:', err);
-        setBattingOrder(defaultBattingOrder());
-        setPositionsByInning(defaultPositions());
-        setGameNotes('');
-      } finally {
-        setLoadingGame(false);
-      }
-    },
-    [defaultBattingOrder, defaultPositions],
-  );
+        // Only reset to defaults if we haven't loaded anything yet
+        if (!loadedGameId) {
+          setBattingOrder(makeDefaultBattingOrder());
+          setPositionsByInning(makeDefaultPositions());
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingGame(false);
+      });
 
-  // Load lineup on initial mount and when game changes
-  useEffect(() => {
-    const game = MOCK_GAMES[currentGameIndex];
-    if (game) {
-      loadGameLineup(game.id);
-    }
-  }, [currentGameIndex, loadGameLineup]);
+    return () => { cancelled = true; };
+  }, [currentGameIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle game change from selector
   const handleGameChange = useCallback(
     (index: number) => {
+      setLoadedGameId(null); // force reload
       setCurrentGameIndex(index);
     },
     [],
@@ -258,6 +265,7 @@ export default function LineupPage() {
     (gameId: string) => {
       const idx = MOCK_GAMES.findIndex((g) => g.id === gameId);
       if (idx !== -1) {
+        setLoadedGameId(null); // force reload
         setCurrentGameIndex(idx);
       }
     },
