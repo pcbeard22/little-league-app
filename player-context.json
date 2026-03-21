@@ -1,0 +1,291 @@
+{
+  "team": "Rockies",
+  "division": "AAA",
+  "league": "Covington Little League",
+  "season": "Spring 2026",
+  "players": [
+    {
+      "number": 1,
+      "firstName": "Aden",
+      "lastName": "Cobb",
+      "tier": "developmental",
+      "attributes": {
+        "speed": 3,
+        "power": 1,
+        "fielding": 1,
+        "armStrength": 1,
+        "baseballIQ": 1,
+        "focus": 1,
+        "attitude": 2,
+        "contactAbility": 2,
+        "handEyeCoordination": 3
+      },
+      "tags": ["speed", "poor-focus", "low-baseball-iq", "hidden-hand-eye", "attention-deficit"],
+      "positions": {
+        "primary": "OF",
+        "secondary": [],
+        "avoid": ["IF"]
+      },
+      "notes": "Least skilled player. Likely ADD - easily distracted, swats at flies in outfield. Actually has good hand-eye coordination when paying attention (rare). Has speed but no baseball IQ. Liability in lineup and field but must play per league rules.",
+      "coachPriority": "Minimize damage. Find spots where attention lapses hurt least."
+    },
+    {
+      "number": 2,
+      "firstName": "Samuel",
+      "lastName": "Elsbury",
+      "tier": "developmental",
+      "attributes": {
+        "speed": 2,
+        "power": 1,
+        "fielding": 3,
+        "armStrength": 2,
+        "baseballIQ": 4,
+        "focus": 4,
+        "attitude": 5,
+        "contactAbility": 2,
+        "handEyeCoordination": 2
+      },
+      "tags": ["smart", "small", "long-swing", "decent-fielder", "good-attitude", "cerebral"],
+      "positions": {
+        "primary": "OF",
+        "secondary": ["2B"],
+        "avoid": []
+      },
+      "notes": "Smaller build, cerebral/smart, athletic (golf-type). Long golf swing causes misses. Decent infield fielder, mostly played OF. Understands baserunning. Good attitude, wants to succeed.",
+      "coachPriority": "Shorten swing. Leverage baseball IQ on bases."
+    },
+    {
+      "number": 3,
+      "firstName": "Leonardo",
+      "lastName": "Castillo",
+      "tier": "potential",
+      "attributes": {
+        "speed": 3,
+        "power": 2,
+        "fielding": 2,
+        "armStrength": 3,
+        "baseballIQ": 3,
+        "focus": 3,
+        "attitude": 3,
+        "contactAbility": 2,
+        "handEyeCoordination": 3
+      },
+      "tags": ["high-potential", "practice-star", "game-struggles", "error-prone", "key-development"],
+      "positions": {
+        "primary": "2B",
+        "secondary": ["OF"],
+        "avoid": []
+      },
+      "notes": "High potential, underperforming. Great in practice (tee, soft toss, slow pitching) but struggles in games. Expected to be sure-handed 2B but has made critical errors beyond what stats show. Was leadoff, moved down. MUST step up for team competitiveness.",
+      "coachPriority": "Critical development player. Team competitiveness depends on his game performance matching practice ability."
+    },
+    {
+      "number": 4,
+      "firstName": "Stephoni",
+      "lastName": "Bufford",
+      "tier": "role-player",
+      "attributes": {
+        "speed": 4,
+        "power": 4,
+        "fielding": 2,
+        "armStrength": 3,
+        "baseballIQ": 2,
+        "focus": 3,
+        "attitude": 4,
+        "contactAbility": 2,
+        "handEyeCoordination": 2
+      },
+      "tags": ["power", "speed", "aggressive-swinger", "head-flies-out", "weak-catcher", "strategic-catcher-role"],
+      "positions": {
+        "primary": "C",
+        "secondary": ["OF", "1B"],
+        "avoid": []
+      },
+      "notes": "Power and speed. Strong when she connects (~40% good swings). Head flies out causing whiffs but swings aggressively. Currently catching - struggles there, lots of passed balls (4 runs on PBs last game). If she holds down C, frees skilled players for IF. Strategic gamble.",
+      "coachPriority": "Develop catching to unlock defensive flexibility. Work on keeping head still at plate."
+    },
+    {
+      "number": 5,
+      "firstName": "Hudson",
+      "lastName": "Beard",
+      "tier": "role-player",
+      "attributes": {
+        "speed": 2,
+        "power": 2,
+        "fielding": 3,
+        "armStrength": 2,
+        "baseballIQ": 3,
+        "focus": 4,
+        "attitude": 5,
+        "contactAbility": 3,
+        "handEyeCoordination": 3
+      },
+      "tags": ["improving", "focused", "good-contact-approach", "slow", "dependable"],
+      "positions": {
+        "primary": "2B",
+        "secondary": ["OF"],
+        "avoid": []
+      },
+      "notes": "Solid for rec league, below average overall. Improving - swinging at strikes, fielding well, catching fly balls. Not fast. Focused and engaged. Puts ball in play, fouls off pitches well despite no hits yet. More dependable than Davis in IF. Has upside.",
+      "coachPriority": "Get him contributing. Doesn't need to be key player but needs to add value. More dependable IF option than Davis."
+    },
+    {
+      "number": 6,
+      "firstName": "Davis",
+      "lastName": "Hall",
+      "tier": "role-player",
+      "attributes": {
+        "speed": 2,
+        "power": 2,
+        "fielding": 3,
+        "armStrength": 2,
+        "baseballIQ": 3,
+        "focus": 4,
+        "attitude": 5,
+        "contactAbility": 3,
+        "handEyeCoordination": 3
+      },
+      "tags": ["similar-to-hudson", "faster-hands", "good-attitude", "outfielder", "contact-hitter"],
+      "positions": {
+        "primary": "OF",
+        "secondary": [],
+        "avoid": ["IF"]
+      },
+      "notes": "Similar to Hudson. Makes more contact - faster hands at plate, slightly faster feet but not truly fast. Good attitude. Plays mostly OF. Cannot play infield. Less dependable than Hudson but slightly better bat. Both add value when locked in.",
+      "coachPriority": "Keep in outfield. Leverage faster hands for contact."
+    },
+    {
+      "number": 7,
+      "firstName": "Rodney",
+      "lastName": "Covington",
+      "tier": "star",
+      "attributes": {
+        "speed": 5,
+        "power": 5,
+        "fielding": 4,
+        "armStrength": 5,
+        "baseballIQ": 4,
+        "focus": 3,
+        "attitude": 5,
+        "contactAbility": 5,
+        "handEyeCoordination": 5
+      },
+      "tags": ["most-athletic", "travel-team", "fast", "power", "strong-arm", "can-play-anywhere", "team-anchor"],
+      "positions": {
+        "primary": "SS",
+        "secondary": ["3B", "P", "ANY"],
+        "avoid": []
+      },
+      "notes": "Most athletic player. #1 travel team in league. Super nice kid, coach's son. Fast with power, throws hard. Should defend better than he does - moves too fast sometimes, doesn't always lock in (high expectations though). Clearly elevated above rest of roster. Team goes where he goes. SS when not pitching.",
+      "coachPriority": "Franchise player. Keep engaged. Team success correlates directly with his performance."
+    },
+    {
+      "number": 8,
+      "firstName": "Bennett",
+      "lastName": "Brooks",
+      "tier": "role-player",
+      "attributes": {
+        "speed": 2,
+        "power": 3,
+        "fielding": 3,
+        "armStrength": 3,
+        "baseballIQ": 3,
+        "focus": 3,
+        "attitude": 4,
+        "contactAbility": 2,
+        "handEyeCoordination": 2
+      },
+      "tags": ["swing-and-miss", "watches-strikes", "long-swing", "decent-arm", "smaller", "decent-pop", "versatile-if"],
+      "positions": {
+        "primary": "P",
+        "secondary": ["3B", "2B", "C", "1B"],
+        "avoid": []
+      },
+      "notes": "Need him to produce. Usually batted higher but too much swing-and-miss plus watching strikes. Long swing needs development. Caught this weekend and added value. Usually pitches, plays 3B or 2B. Could try 1B. Smaller/shorter but decent pop. Decent arm strength.",
+      "coachPriority": "Need offensive production. Shorten swing. Explore 1B as option. Versatile defensively."
+    },
+    {
+      "number": 9,
+      "firstName": "Kellen",
+      "lastName": "Ward",
+      "tier": "star",
+      "attributes": {
+        "speed": 1,
+        "power": 3,
+        "fielding": 5,
+        "armStrength": 3,
+        "baseballIQ": 5,
+        "focus": 5,
+        "attitude": 5,
+        "contactAbility": 4,
+        "handEyeCoordination": 4
+      },
+      "tags": ["all-star", "best-catcher", "sure-handed", "smart-baserunner", "slow", "tall", "long-swing"],
+      "positions": {
+        "primary": "C",
+        "secondary": ["1B", "3B"],
+        "avoid": []
+      },
+      "notes": "All-star (2nd/3rd team of 3). Best catcher on team but don't want to overuse at C since that's his all-star role - give him looks elsewhere. Sure-handed 1B. Plays 3B too. Long swing but makes more contact than others with long swings. Tall, very smart on basepaths - baseball IQ compensates for slow speed to steal bases.",
+      "coachPriority": "Limit catching to preserve for all-star. Use at 1B/3B. Key bat in lineup."
+    },
+    {
+      "number": 10,
+      "firstName": "Carson",
+      "lastName": "McAlpine",
+      "tier": "star",
+      "attributes": {
+        "speed": 3,
+        "power": 5,
+        "fielding": 5,
+        "armStrength": 4,
+        "baseballIQ": 5,
+        "focus": 3,
+        "attitude": 1,
+        "contactAbility": 4,
+        "handEyeCoordination": 4
+      },
+      "tags": ["best-player", "worst-attitude", "power", "switch-hitter", "great-infielder", "complainer", "family-issues", "huge-potential"],
+      "positions": {
+        "primary": "1B",
+        "secondary": ["SS", "P", "3B"],
+        "wants": ["P", "SS"],
+        "avoid": []
+      },
+      "notes": "Probably best player on team but worst attitude (conditioned from family/dad who is also a coach). Big kid with lots of power. Switch hitter, bats mostly left. Great infielder, great 1B. Only wants to pitch and play SS - complains about other positions. Gets down on himself and teammates. Knows baseball. Could be one of league's best if he locked in. Dad has his own issues.",
+      "coachPriority": "Manage attitude. Maximize talent while navigating family dynamics. Critical to winning."
+    },
+    {
+      "number": 11,
+      "firstName": "Riley",
+      "lastName": "Walker",
+      "tier": "role-player",
+      "attributes": {
+        "speed": 1,
+        "power": 3,
+        "fielding": 4,
+        "armStrength": 2,
+        "baseballIQ": 3,
+        "focus": 3,
+        "attitude": 3,
+        "contactAbility": 2,
+        "handEyeCoordination": 3
+      },
+      "tags": ["heavyset", "good-hands", "good-fielder", "cant-hit-target", "late-loader", "slow-pitch-hitter"],
+      "positions": {
+        "primary": "1B",
+        "secondary": ["3B", "OF"],
+        "avoid": []
+      },
+      "notes": "Heavyset but really good hands, good fielder. Can't throw accurately. Can smack the ball against slow pitchers but too late against fast pitching - doesn't load soon enough. Has potential if timing improves.",
+      "coachPriority": "Work on early load timing. Leverage good hands on defense. Good against slow pitchers."
+    }
+  ],
+  "teamStrategy": {
+    "keyInsight": "Team goes where Rodney goes. Carson is best talent but attitude is a wildcard. Kellen is the steady anchor.",
+    "defensiveDilemma": "Stephoni at C frees IF spots but costs passed balls. Kellen is best C but want to limit his catching for all-star preservation.",
+    "offensiveCore": ["Rodney Covington", "Kellen Ward", "Carson McAlpine"],
+    "developmentPriority": ["Leonardo Castillo", "Stephoni Bufford", "Bennett Brooks"],
+    "minimizeDamage": ["Aden Cobb"]
+  }
+}
