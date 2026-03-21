@@ -1,10 +1,10 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { initializeFirestore } from 'firebase/firestore'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: "AIzaSyD8L0KG4UKPaJbInm5A4iO4VcH6ov02ejw",
-  authDomain: "little-league-app-a9452.firebaseapp.com",
+  authDomain: "gamemanager.tech",
   projectId: "little-league-app-a9452",
   storageBucket: "little-league-app-a9452.firebasestorage.app",
   messagingSenderId: "268991389439",
@@ -12,7 +12,11 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
-export const db = getFirestore(app)
+
+// Use long polling to avoid CORS issues with Firestore channel listener
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+})
 export const auth = getAuth(app)
 
 export const TEAM_ID = 'covington_rockies_aaa'
