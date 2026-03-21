@@ -1,7 +1,10 @@
 [build]
   base = "rockies-app"
   command = "npm run build"
-  publish = "rockies-app/dist"
+  publish = "dist"
+
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
 [[redirects]]
   from = "/*"
