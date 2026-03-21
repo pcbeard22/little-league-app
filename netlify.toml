@@ -1,0 +1,9 @@
+[build]
+  base = "rockies-app"
+  command = "npm run build"
+  publish = "rockies-app/dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
