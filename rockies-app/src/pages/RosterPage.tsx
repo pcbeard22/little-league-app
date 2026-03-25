@@ -6,7 +6,7 @@ import type { CoachNote } from '@/lib/coach-notes';
 import type { Player, PlayerAttributes } from '@/types';
 
 const COACH_MODE_KEY = 'rockies_coach_mode';
-const COACH_PIN = '1234';
+const COACH_PIN = '7625' // ROCK on phone keypad;
 
 /** Tags that are hidden from public (non-coach) view */
 const SENSITIVE_TAGS = new Set([
