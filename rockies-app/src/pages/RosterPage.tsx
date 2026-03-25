@@ -518,12 +518,19 @@ function PlayerCard({
           </button>
           {notesOpen && (
             <div className="px-5 pb-4 space-y-2">
-              <p className="text-xs text-gray-600 leading-relaxed">{player.notes}</p>
-              <div className="bg-[var(--color-rockies-purple)]/5 border border-[var(--color-rockies-purple)]/10 rounded-lg px-3 py-2">
-                <span className="text-[10px] uppercase font-semibold text-[var(--color-rockies-purple)] tracking-wide">
-                  Priority
-                </span>
-                <p className="text-xs text-[var(--color-rockies-black)] mt-0.5 leading-relaxed">
+              <div className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                <div className="flex items-baseline justify-between gap-2 mb-1">
+                  <span className="text-xs font-bold text-[var(--color-rockies-purple)]">Coach Peyton</span>
+                  <span className="text-[10px] text-gray-400">Mar 4, 2026</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">{player.notes}</p>
+              </div>
+              <div className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                <div className="flex items-baseline justify-between gap-2 mb-1">
+                  <span className="text-xs font-bold text-[var(--color-rockies-purple)]">Coach Peyton</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">Priority</span>
+                </div>
+                <p className="text-xs text-[var(--color-rockies-black)] leading-relaxed">
                   {player.coachPriority}
                 </p>
               </div>

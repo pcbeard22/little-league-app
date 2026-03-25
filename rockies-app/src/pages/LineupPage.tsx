@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, Share2, Sparkles, FolderOpen, Loader2, Check, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Save, Share2, Sparkles, FolderOpen, Loader2, Check, ChevronDown, ChevronUp, Plus, Trash2, Lock } from 'lucide-react';
 import BaseballField from '@/components/field/BaseballField';
 import InningTabs from '@/components/field/InningTabs';
 import GameSelector, { type GameInfo } from '@/components/layout/GameSelector';
@@ -227,6 +227,10 @@ export default function LineupPage() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [fieldOpen, setFieldOpen] = useState(false);
+  const [notesUnlocked, setNotesUnlocked] = useState(() => localStorage.getItem('rockies_coach_mode') === 'true');
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   // Default lineup generators (stable — no dependency on players ref)
   function makeDefaultBattingOrder() {
@@ -576,28 +580,91 @@ export default function LineupPage() {
         </div>
       )}
 
-      {/* Game Notes */}
+      {/* Game Notes — PIN protected */}
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6">
         <div className="bg-rockies-purple/[0.03] border border-rockies-purple/10 rounded-xl overflow-hidden">
           <button
-            onClick={() => setNotesOpen((o) => !o)}
+            onClick={() => {
+              if (!notesUnlocked) {
+                setShowPinPrompt(true);
+                return;
+              }
+              setNotesOpen((o) => !o);
+            }}
             className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-rockies-black/70 hover:bg-rockies-purple/5 transition-colors"
           >
             <span className="flex items-center gap-2">
-              Game Notes{gameNoteEntries.length > 0 && ` (${gameNoteEntries.length})`}
-              {gameNoteEntries.length > 0 && !notesOpen && (
-                <span className="text-xs font-normal text-rockies-purple/50 truncate max-w-[200px]">
-                  — {gameNoteEntries[gameNoteEntries.length - 1].text.split('\n')[0]}
-                </span>
+              {notesUnlocked ? (
+                <>
+                  Game Notes{gameNoteEntries.length > 0 && ` (${gameNoteEntries.length})`}
+                  {gameNoteEntries.length > 0 && !notesOpen && (
+                    <span className="text-xs font-normal text-rockies-purple/50 truncate max-w-[200px]">
+                      — {gameNoteEntries[gameNoteEntries.length - 1].text.split('\n')[0]}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-rockies-black/40" />
+                  Game Notes (Locked)
+                </>
               )}
             </span>
-            {notesOpen ? (
-              <ChevronUp className="w-4 h-4 text-rockies-black/40" />
+            {notesUnlocked ? (
+              notesOpen ? <ChevronUp className="w-4 h-4 text-rockies-black/40" /> : <ChevronDown className="w-4 h-4 text-rockies-black/40" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-rockies-black/40" />
+              <span className="text-[10px] text-rockies-black/40">PIN required</span>
             )}
           </button>
-          {notesOpen && (
+
+          {/* PIN prompt modal */}
+          {showPinPrompt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowPinPrompt(false); setPinInput(''); setPinError(false); }} />
+              <div className="relative bg-white rounded-2xl shadow-xl p-6 w-full max-w-xs mx-4">
+                <h3 className="text-sm font-bold text-rockies-black mb-3">Enter Coach PIN</h3>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={pinInput}
+                  onChange={(e) => { setPinInput(e.target.value); setPinError(false); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (pinInput === '7625') {
+                        setNotesUnlocked(true);
+                        setNotesOpen(true);
+                        setShowPinPrompt(false);
+                        setPinInput('');
+                        localStorage.setItem('rockies_coach_mode', 'true');
+                      } else {
+                        setPinError(true);
+                      }
+                    }
+                  }}
+                  placeholder="PIN"
+                  autoFocus
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-rockies-purple/40"
+                />
+                {pinError && <p className="text-xs text-red-500 mt-1 text-center">Incorrect PIN</p>}
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => { setShowPinPrompt(false); setPinInput(''); setPinError(false); }} className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
+                  <button onClick={() => {
+                    if (pinInput === '7625') {
+                      setNotesUnlocked(true);
+                      setNotesOpen(true);
+                      setShowPinPrompt(false);
+                      setPinInput('');
+                      localStorage.setItem('rockies_coach_mode', 'true');
+                    } else {
+                      setPinError(true);
+                    }
+                  }} className="flex-1 px-3 py-2 text-xs font-bold rounded-lg bg-rockies-purple text-white hover:bg-rockies-deep-purple transition-colors">Unlock</button>
+                </div>
+              </div>
+            </div>
+          )}
+          {notesOpen && notesUnlocked && (
             <div className="px-4 pb-4 space-y-3">
               {/* Existing note entries */}
               {gameNoteEntries.length > 0 && (
