@@ -24,6 +24,7 @@ import { usePlayers } from '@/context/PlayersContext';
 import { POSITIONS, type Position, type Player } from '@/types';
 import { suggestLineup } from '@/lib/lineup-engine';
 import { saveLineup, loadLineup } from '@/lib/lineup-storage';
+import { fetchAIAdjustments } from '@/lib/ai-adjustments';
 import SavedLineupsModal from '@/pages/SavedLineupsModal';
 
 // ---------------------------------------------------------------------------
@@ -191,6 +192,7 @@ export default function LineupPage() {
   const [showLineupsModal, setShowLineupsModal] = useState(false);
   const [gameNotes, setGameNotes] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Default lineup generators (stable — no dependency on players ref)
   function makeDefaultBattingOrder() {
@@ -335,37 +337,56 @@ export default function LineupPage() {
     [],
   );
 
-  // Auto-suggest handler — checks previous game's pitchers
+  // Auto-suggest handler — checks previous game's pitchers + AI adjustments
   const handleAutoSuggest = useCallback(async () => {
-    let lastPitchers: number[] = [];
+    setAiLoading(true);
 
-    // Try to load previous game's lineup to find who pitched
-    if (currentGameIndex > 0) {
-      const prevGameId = MOCK_GAMES[currentGameIndex - 1]?.id;
-      if (prevGameId) {
-        try {
-          const prevLineup = await loadLineup(prevGameId);
-          if (prevLineup) {
-            // Find players who were at P in any inning
+    let lastPitchers: number[] = [];
+    const recentNotes: string[] = [];
+
+    // Collect notes and pitcher data from previous games (up to 3)
+    const startIdx = Math.max(0, currentGameIndex - 3);
+    for (let gi = startIdx; gi < currentGameIndex; gi++) {
+      const gid = MOCK_GAMES[gi]?.id;
+      if (!gid) continue;
+      try {
+        const saved = await loadLineup(gid);
+        if (saved) {
+          // Collect game notes
+          if (saved.gameNotes?.trim()) {
+            recentNotes.push(saved.gameNotes);
+          }
+          // Find pitchers from the immediately previous game
+          if (gi === currentGameIndex - 1) {
             const pitcherIndices = new Set<number>();
-            for (let pIdx = 0; pIdx < prevLineup.positionsByInning.length; pIdx++) {
-              for (const pos of prevLineup.positionsByInning[pIdx]) {
+            for (let pIdx = 0; pIdx < saved.positionsByInning.length; pIdx++) {
+              for (const pos of saved.positionsByInning[pIdx]) {
                 if (pos === 'P') pitcherIndices.add(pIdx);
               }
             }
-            // Convert indices to jersey numbers
-            lastPitchers = Array.from(pitcherIndices).map((idx) => players[idx]?.number).filter(Boolean);
+            lastPitchers = Array.from(pitcherIndices)
+              .map((idx) => players[idx]?.number)
+              .filter(Boolean);
           }
-        } catch {
-          // Silently continue without last game data
         }
+      } catch {
+        // Silently continue without this game's data
       }
     }
 
-    const suggestion = suggestLineup(players, TOTAL_INNINGS, [], lastPitchers);
+    // Include current game notes if any
+    if (gameNotes.trim()) {
+      recentNotes.push(gameNotes);
+    }
+
+    // Fetch AI adjustments (returns [] on any error — non-blocking)
+    const aiAdjustments = await fetchAIAdjustments(recentNotes, players);
+
+    const suggestion = suggestLineup(players, TOTAL_INNINGS, [], lastPitchers, aiAdjustments);
     setBattingOrder(suggestion.battingOrder);
     setPositionsByInning(suggestion.positionsByInning);
-  }, [players, currentGameIndex]);
+    setAiLoading(false);
+  }, [players, currentGameIndex, gameNotes]);
 
   // Derive field positions for current inning
   const fieldPositions = useMemo(() => {
@@ -515,10 +536,15 @@ export default function LineupPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-3">
           <button
             onClick={handleAutoSuggest}
-            className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-rockies-purple border border-rockies-purple/20 bg-rockies-purple/5 hover:bg-rockies-purple/10 transition-colors"
+            disabled={aiLoading}
+            className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-rockies-purple border border-rockies-purple/20 bg-rockies-purple/5 hover:bg-rockies-purple/10 transition-colors disabled:opacity-60"
           >
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Auto-Suggest</span>
+            {aiLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">{aiLoading ? 'Analyzing...' : 'Auto-Suggest'}</span>
           </button>
           <button
             onClick={() => setShowLineupsModal(true)}

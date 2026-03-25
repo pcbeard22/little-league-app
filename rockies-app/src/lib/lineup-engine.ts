@@ -1,4 +1,5 @@
 import type { Player } from '@/types';
+import type { AIAdjustment } from '@/lib/ai-adjustments';
 
 // ---------------------------------------------------------------------------
 // Coach-defined depth charts (by jersey number)
@@ -43,7 +44,7 @@ const FIRSTBASE_DEPTH: Record<number, number> = {
 // Position fitness scoring (attributes + depth chart bonus)
 // ---------------------------------------------------------------------------
 
-function positionFitScore(player: Player, position: string): number {
+function positionFitScore(player: Player, position: string, aiAdjustments?: AIAdjustment[]): number {
   const { attributes, positions, tier } = player;
   let score = 0;
 
@@ -94,6 +95,15 @@ function positionFitScore(player: Player, position: string): number {
   if (position === 'C' && CATCHER_DEPTH[num]) score += CATCHER_DEPTH[num];
   if (position === 'SS' && SS_DEPTH[num]) score += SS_DEPTH[num];
   if (position === '1B' && FIRSTBASE_DEPTH[num]) score += FIRSTBASE_DEPTH[num];
+
+  // Layer on AI adjustments from game notes analysis
+  if (aiAdjustments) {
+    for (const adj of aiAdjustments) {
+      if (adj.playerNumber === num && adj.position === position) {
+        score += adj.adjustment;
+      }
+    }
+  }
 
   return score;
 }
@@ -160,6 +170,7 @@ export function suggestLineup(
   totalInnings: number,
   absentPlayerNumbers?: number[],
   lastGamePitcherNumbers?: number[],
+  aiAdjustments?: AIAdjustment[],
 ): SuggestedLineup {
   // =========================================================================
   // Step 0: Filter out absent players
@@ -382,7 +393,7 @@ export function suggestLineup(
     }
 
     // --- Everything else assigned by attribute + depth chart scoring ---
-    assignPositions(players, fieldPlayers, inn, positionsByInning, locked);
+    assignPositions(players, fieldPlayers, inn, positionsByInning, locked, aiAdjustments);
 
     for (const bi of benched) {
       positionsByInning[bi][inn] = 'BN';
@@ -401,6 +412,7 @@ function assignPositions(
   inning: number,
   positionsByInning: string[][],
   locked: Map<string, number> = new Map(),
+  aiAdjustments?: AIAdjustment[],
 ) {
   const available = new Set(fieldPlayerIndices);
   const filledPositions = new Set<string>();
@@ -417,7 +429,7 @@ function assignPositions(
   for (const pos of FIELD_POSITIONS) {
     if (filledPositions.has(pos)) continue;
     for (const pi of available) {
-      combos.push({ pos, playerIdx: pi, score: positionFitScore(allPlayers[pi], pos) });
+      combos.push({ pos, playerIdx: pi, score: positionFitScore(allPlayers[pi], pos, aiAdjustments) });
     }
   }
 
