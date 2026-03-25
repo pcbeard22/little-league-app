@@ -91,8 +91,8 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        {/* Filter tabs */}
-        <div className="px-4 py-3 border-t border-rockies-silver/20 flex gap-1 overflow-x-auto">
+        {/* Filter tabs + Standings jump link */}
+        <div className="px-4 py-3 border-t border-rockies-silver/20 flex items-center gap-1 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -106,13 +106,101 @@ export default function SchedulePage() {
               {tab.label}
             </button>
           ))}
+          <a
+            href="#standings"
+            className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-rockies-purple bg-rockies-purple/10 hover:bg-rockies-purple/20 transition-colors whitespace-nowrap lg:hidden"
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            Standings
+          </a>
         </div>
       </div>
 
-      {/* Two-column layout */}
+      {/* Two-column layout: Standings + Widget (left), Games (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left column — Game Changer Widget (60%) */}
-        <div className="lg:col-span-3">
+        {/* Left column — Standings + Game Changer Widget (~60%) */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Standings Table */}
+          <div id="standings" className="bg-white rounded-2xl border border-rockies-silver/30 shadow-sm overflow-hidden scroll-mt-4">
+            <div className="px-5 py-3 border-b border-rockies-silver/20 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-rockies-purple" />
+              <h2 className="font-heading font-bold text-lg text-rockies-black">
+                AAA Standings
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-rockies-silver/20 bg-gray-50/80">
+                    <th className="text-left px-2 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider w-8">#</th>
+                    <th className="text-left px-2 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">Team</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">W</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">L</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">T</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">PCT</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">GB</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">RS</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">RA</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">DIFF</th>
+                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">STRK</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedStandings.map((team, idx) => {
+                    const isRockies = team.team === 'Rockies';
+
+                    return (
+                      <tr
+                        key={team.coachName}
+                        className={`border-b border-rockies-silver/10 transition-colors ${
+                          isRockies
+                            ? 'bg-rockies-purple/10 font-semibold'
+                            : idx % 2 === 0
+                              ? 'bg-white'
+                              : 'bg-gray-50/40'
+                        } ${!isRockies ? 'hover:bg-gray-50/80' : ''}`}
+                      >
+                        <td className={`px-2 py-2 ${isRockies ? 'text-rockies-purple font-bold' : 'text-rockies-black/40'}`}>
+                          {idx + 1}
+                        </td>
+                        <td className={`px-2 py-2 whitespace-nowrap ${isRockies ? 'text-rockies-purple' : 'text-rockies-black'}`}>
+                          <div className="flex items-center gap-1.5">
+                            {isRockies && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-rockies-purple shrink-0" />
+                            )}
+                            {team.team}
+                          </div>
+                        </td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80">{team.wins}</td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80">{team.losses}</td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80">{team.ties}</td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80 font-mono">
+                          {team.pct.toFixed(3)}
+                        </td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80">
+                          {team.gb}
+                        </td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80">{team.runsFor}</td>
+                        <td className="text-center px-1.5 py-2 text-rockies-black/80">{team.runsAgainst}</td>
+                        <td className={`text-center px-1.5 py-2 font-medium ${
+                          team.diff > 0 ? 'text-green-600' : team.diff < 0 ? 'text-red-500' : 'text-rockies-black/40'
+                        }`}>
+                          {team.diff > 0 ? `+${team.diff}` : team.diff}
+                        </td>
+                        <td className={`text-center px-1.5 py-2 font-medium ${
+                          team.streak.startsWith('W') ? 'text-green-600' : 'text-red-500'
+                        }`}>
+                          {team.streak}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Game Changer Widget */}
           <div className="bg-white rounded-2xl border border-rockies-silver/30 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-rockies-silver/20 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-rockies-purple" />
@@ -129,7 +217,7 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        {/* Right column — Quick Game Cards (40%) */}
+        {/* Right column — Game Cards (~40%) */}
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center gap-2 px-1">
             <h2 className="font-heading font-bold text-lg text-rockies-black">
@@ -140,153 +228,82 @@ export default function SchedulePage() {
             </span>
           </div>
 
-          {filteredGames.map((game) => {
-            const opponentRecord = getTeamRecord(game.opponent);
-            return (
-              <div
-                key={game.id}
-                className="bg-white rounded-xl border border-rockies-silver/30 shadow-sm p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
+          <div className="lg:max-h-[600px] lg:overflow-y-auto lg:pr-1 space-y-3">
+            {filteredGames.map((game) => {
+              const opponentRecord = getTeamRecord(game.opponent);
+              return (
+                <div
+                  key={game.id}
+                  className="bg-white rounded-xl border border-rockies-silver/30 shadow-sm p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-heading font-bold text-rockies-black">
+                          vs {game.opponent}
+                        </p>
+                        {opponentRecord && (
+                          <span className="text-xs text-rockies-black/40 font-medium">
+                            ({formatRecord(opponentRecord)})
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="flex items-center gap-1 text-xs text-rockies-black/50">
+                          <Calendar className="w-3 h-3" />
+                          {game.date}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-rockies-black/50">
+                          <Clock className="w-3 h-3" />
+                          {game.time}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        game.status === 'completed'
+                          ? 'bg-rockies-purple/10 text-rockies-purple'
+                          : 'bg-purple-100 text-purple-700'
+                      }`}
+                    >
+                      {game.status === 'completed' ? 'Final' : 'Upcoming'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <p className="font-heading font-bold text-rockies-black">
-                        vs {game.opponent}
-                      </p>
-                      {opponentRecord && game.status === 'upcoming' && (
-                        <span className="text-xs text-rockies-black/40 font-medium">
-                          ({formatRecord(opponentRecord)})
+                      <span className="flex items-center gap-1 text-xs text-rockies-black/50">
+                        <MapPin className="w-3 h-3" />
+                        {game.location === 'home' ? 'Home' : 'Away'}
+                      </span>
+                      {game.score && game.result && (
+                        <span
+                          className={`text-sm font-bold ${
+                            game.result === 'W'
+                              ? 'text-green-600'
+                              : game.result === 'L'
+                              ? 'text-red-500'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {game.result}{' '}
+                          {game.score.us}-{game.score.them}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="flex items-center gap-1 text-xs text-rockies-black/50">
-                        <Calendar className="w-3 h-3" />
-                        {game.date}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-rockies-black/50">
-                        <Clock className="w-3 h-3" />
-                        {game.time}
-                      </span>
-                    </div>
+
+                    <Link
+                      to="/lineup"
+                      className="flex items-center gap-1 text-xs font-semibold text-rockies-purple hover:text-purple-800 transition-colors"
+                    >
+                      {game.status === 'completed' ? 'View Lineup' : 'Edit Lineup'}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                      game.status === 'completed'
-                        ? 'bg-rockies-purple/10 text-rockies-purple'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}
-                  >
-                    {game.status === 'completed' ? 'Final' : 'Upcoming'}
-                  </span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1 text-xs text-rockies-black/50">
-                      <MapPin className="w-3 h-3" />
-                      {game.location === 'home' ? 'Home' : 'Away'}
-                    </span>
-                    {game.score && game.result && (
-                      <span
-                        className={`text-sm font-bold ${
-                          game.result === 'W'
-                            ? 'text-green-600'
-                            : game.result === 'L'
-                            ? 'text-red-500'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        {game.result}{' '}
-                        {game.score.us}-{game.score.them}
-                      </span>
-                    )}
-                  </div>
-
-                  <Link
-                    to="/lineup"
-                    className="flex items-center gap-1 text-xs font-semibold text-rockies-purple hover:text-purple-800 transition-colors"
-                  >
-                    {game.status === 'completed' ? 'View Lineup' : 'Edit Lineup'}
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Standings Table */}
-      <div className="bg-white rounded-2xl border border-rockies-silver/30 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-rockies-silver/20 flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-rockies-purple" />
-          <h2 className="font-heading font-bold text-lg text-rockies-black">
-            AAA Standings
-          </h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-rockies-silver/20 bg-gray-50/80">
-                <th className="text-left px-4 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider w-10">#</th>
-                <th className="text-left px-4 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">Team</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">W</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">L</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">T</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">Win%</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">RF</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">RA</th>
-                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">Diff</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedStandings.map((team, idx) => {
-                const totalGames = team.wins + team.losses + team.ties;
-                const winPct = totalGames > 0 && (team.wins + team.losses) > 0
-                  ? (team.wins / (team.wins + team.losses)).toFixed(3)
-                  : '-';
-                const diff = team.runsFor - team.runsAgainst;
-                const isRockies = team.team === 'Rockies';
-
-                return (
-                  <tr
-                    key={team.coachName}
-                    className={`border-b border-rockies-silver/10 transition-colors ${
-                      isRockies
-                        ? 'bg-rockies-purple/8 font-semibold'
-                        : 'hover:bg-gray-50/50'
-                    }`}
-                  >
-                    <td className={`px-4 py-3 ${isRockies ? 'text-rockies-purple font-bold' : 'text-rockies-black/40'}`}>
-                      {idx + 1}
-                    </td>
-                    <td className={`px-4 py-3 ${isRockies ? 'text-rockies-purple' : 'text-rockies-black'}`}>
-                      <div className="flex items-center gap-2">
-                        {isRockies && (
-                          <span className="w-2 h-2 rounded-full bg-rockies-purple shrink-0" />
-                        )}
-                        {team.team}
-                      </div>
-                    </td>
-                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.wins}</td>
-                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.losses}</td>
-                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.ties}</td>
-                    <td className="text-center px-3 py-3 text-rockies-black/80 font-mono text-xs">
-                      {winPct}
-                    </td>
-                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.runsFor}</td>
-                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.runsAgainst}</td>
-                    <td className={`text-center px-3 py-3 font-medium ${
-                      diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-500' : 'text-rockies-black/40'
-                    }`}>
-                      {diff > 0 ? `+${diff}` : diff === 0 && totalGames === 0 ? '-' : diff}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
