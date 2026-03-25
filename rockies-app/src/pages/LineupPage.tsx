@@ -74,6 +74,9 @@ interface SortableRowProps {
   currentInning: number;
   onPositionChange: (playerIdx: number, inning: number, pos: string) => void;
   players: Player[];
+  totalRows: number;
+  onMoveUp: (orderIdx: number) => void;
+  onMoveDown: (orderIdx: number) => void;
 }
 
 function SortablePlayerRow({
@@ -84,6 +87,9 @@ function SortablePlayerRow({
   currentInning,
   onPositionChange,
   players,
+  totalRows,
+  onMoveUp,
+  onMoveDown,
 }: SortableRowProps) {
   const {
     attributes,
@@ -116,13 +122,39 @@ function SortablePlayerRow({
           : 'bg-surface/60'
       } hover:bg-surface-container-low transition-colors`}
     >
-      {/* Drag handle */}
+      {/* Drag handle — desktop only */}
       <div
         {...attributes}
         {...listeners}
-        className="flex items-center justify-center w-8 h-full cursor-grab active:cursor-grabbing"
+        className="hidden lg:flex items-center justify-center w-8 h-full cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="w-4 h-4 text-rockies-black/25" />
+      </div>
+
+      {/* Up/Down arrows — mobile only */}
+      <div className="flex lg:hidden flex-col items-center justify-center w-8 h-full gap-0">
+        {orderIdx > 0 ? (
+          <button
+            type="button"
+            onClick={() => onMoveUp(orderIdx)}
+            className="p-0.5 text-rockies-black/30 hover:text-rockies-black/60 active:text-rockies-purple transition-colors"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+        ) : (
+          <div className="w-4 h-4 p-0.5" />
+        )}
+        {orderIdx < totalRows - 1 ? (
+          <button
+            type="button"
+            onClick={() => onMoveDown(orderIdx)}
+            className="p-0.5 text-rockies-black/30 hover:text-rockies-black/60 active:text-rockies-purple transition-colors"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        ) : (
+          <div className="w-4 h-4 p-0.5" />
+        )}
       </div>
 
       {/* Order number */}
@@ -193,6 +225,7 @@ export default function LineupPage() {
   const [gameNotes, setGameNotes] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [fieldOpen, setFieldOpen] = useState(false);
 
   // Default lineup generators (stable — no dependency on players ref)
   function makeDefaultBattingOrder() {
@@ -337,6 +370,25 @@ export default function LineupPage() {
     [],
   );
 
+  // Move player up/down in batting order (mobile arrows)
+  const handleMoveUp = useCallback((orderIdx: number) => {
+    if (orderIdx <= 0) return;
+    setBattingOrder((prev) => {
+      const next = [...prev];
+      [next[orderIdx - 1], next[orderIdx]] = [next[orderIdx], next[orderIdx - 1]];
+      return next;
+    });
+  }, []);
+
+  const handleMoveDown = useCallback((orderIdx: number) => {
+    setBattingOrder((prev) => {
+      if (orderIdx >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[orderIdx], next[orderIdx + 1]] = [next[orderIdx + 1], next[orderIdx]];
+      return next;
+    });
+  }, []);
+
   // Auto-suggest handler — checks previous game's pitchers + AI adjustments
   const handleAutoSuggest = useCallback(async () => {
     setAiLoading(true);
@@ -415,19 +467,40 @@ export default function LineupPage() {
       {/* Main content */}
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 lg:py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left column — baseball field */}
+          {/* Left column — baseball field (collapsible on mobile) */}
           <div className="w-full lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
-            <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest p-2 sm:p-4">
-              {/* Inning tabs above the field */}
+            <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest p-1 lg:p-4">
+              {/* Inning tabs — always visible */}
               <InningTabs
                 currentInning={currentInning}
                 onInningChange={setCurrentInning}
                 totalInnings={TOTAL_INNINGS}
               />
-              <h2 className="font-heading font-semibold text-sm text-rockies-black/60 mt-3 mb-2 text-center">
+
+              {/* Collapsible header — mobile only */}
+              <button
+                onClick={() => setFieldOpen((o) => !o)}
+                className="lg:hidden w-full flex items-center justify-center gap-2 mt-2 mb-1 py-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+              >
+                <h2 className="font-heading font-semibold text-sm text-rockies-black/60">
+                  Field — {ordinal(currentInning)} Inning
+                </h2>
+                {fieldOpen ? (
+                  <ChevronUp className="w-4 h-4 text-rockies-black/40" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-rockies-black/40" />
+                )}
+              </button>
+
+              {/* Desktop header — always shown */}
+              <h2 className="hidden lg:block font-heading font-semibold text-sm text-rockies-black/60 mt-3 mb-2 text-center">
                 Field — {ordinal(currentInning)} Inning
               </h2>
-              <BaseballField positions={fieldPositions} />
+
+              {/* Field SVG — always shown on desktop, toggle on mobile */}
+              <div className={`${fieldOpen ? 'block' : 'hidden'} lg:block w-full`}>
+                <BaseballField positions={fieldPositions} />
+              </div>
             </div>
           </div>
 
@@ -478,6 +551,9 @@ export default function LineupPage() {
                       currentInning={currentInning}
                       onPositionChange={handlePositionChange}
                       players={players}
+                      totalRows={battingOrder.length}
+                      onMoveUp={handleMoveUp}
+                      onMoveDown={handleMoveDown}
                     />
                   ))}
                 </SortableContext>

@@ -1,15 +1,35 @@
-import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Pencil, Check, X, MessageSquarePlus } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronDown, ChevronUp, Pencil, Check, X, MessageSquarePlus, Lock, Unlock } from 'lucide-react';
 import { usePlayers } from '@/context/PlayersContext';
 import { fetchCoachNotes, addCoachNote as addCoachNoteToFirebase } from '@/lib/coach-notes';
 import type { CoachNote } from '@/lib/coach-notes';
 import type { Player, PlayerAttributes } from '@/types';
 
+const COACH_MODE_KEY = 'rockies_coach_mode';
+const COACH_PIN = '1234';
+
+/** Tags that are hidden from public (non-coach) view */
+const SENSITIVE_TAGS = new Set([
+  'worst-attitude', 'complainer', 'family-issues', 'poor-focus', 'low-baseball-iq',
+  'attention-deficit', 'weak-catcher', 'error-prone', 'head-flies-out',
+  'swing-and-miss', 'watches-strikes', 'late-loader', 'cant-hit-target',
+  'hidden-hand-eye', 'game-struggles',
+]);
+
+/** Tags removed entirely even in coach mode */
+const ALWAYS_HIDDEN_TAGS = new Set(['family-issues']);
+
+/** Display-name overrides for cleaned-up tags (coach mode) */
+const TAG_RENAME: Record<string, string> = {
+  'worst-attitude': 'attitude-concern',
+  'attention-deficit': 'focus-concern',
+};
+
 const POSITIVE_TAGS = new Set([
   'speed', 'power', 'smart', 'cerebral', 'good-attitude', 'focused', 'dependable',
   'improving', 'sure-handed', 'all-star', 'most-athletic', 'travel-team', 'fast',
   'strong-arm', 'team-anchor', 'best-player', 'great-infielder', 'switch-hitter',
-  'good-hands', 'good-fielder', 'contact-hitter', 'can-play-anywhere', 'hidden-hand-eye',
+  'good-hands', 'good-fielder', 'contact-hitter', 'can-play-anywhere',
   'best-catcher', 'smart-baserunner', 'aggressive-swinger', 'good-contact-approach',
   'decent-fielder', 'high-potential',
 ]);
@@ -18,6 +38,7 @@ const NEGATIVE_TAGS = new Set([
   'poor-focus', 'low-baseball-iq', 'attention-deficit', 'error-prone', 'head-flies-out',
   'weak-catcher', 'swing-and-miss', 'watches-strikes', 'worst-attitude', 'complainer',
   'family-issues', 'late-loader', 'long-swing', 'cant-hit-target', 'slow',
+  'hidden-hand-eye', 'game-struggles',
 ]);
 
 const TIER_CONFIG: Record<Player['tier'], { label: string; bg: string; text: string }> = {
@@ -63,7 +84,8 @@ function getTagColor(tag: string): string {
 }
 
 function formatTagLabel(tag: string): string {
-  return tag
+  const display = TAG_RENAME[tag] ?? tag;
+  return display
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
@@ -249,12 +271,85 @@ function CoachNotesSection({ playerNumber }: { playerNumber: number }) {
   );
 }
 
+function PinModal({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleSubmit = () => {
+    if (pin === COACH_PIN) {
+      onSuccess();
+    } else {
+      setError(true);
+      setPin('');
+      inputRef.current?.focus();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl p-6 w-72 space-y-4">
+        <h3 className="text-sm font-bold text-[var(--color-rockies-black)]">Enter Coach PIN</h3>
+        <input
+          ref={inputRef}
+          type="password"
+          inputMode="numeric"
+          maxLength={6}
+          value={pin}
+          onChange={(e) => { setPin(e.target.value); setError(false); }}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          placeholder="PIN"
+          className={`w-full text-center text-lg tracking-widest border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-rockies-purple)]/40 ${
+            error ? 'border-red-400 bg-red-50' : 'border-gray-200'
+          }`}
+        />
+        {error && <p className="text-xs text-red-500 text-center">Incorrect PIN</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-[var(--color-rockies-purple)] text-white hover:bg-purple-800 cursor-pointer"
+          >
+            Unlock
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getVisibleTags(tags: string[], coachMode: boolean): string[] {
+  return tags.filter((tag) => {
+    // Always hide family-issues
+    if (ALWAYS_HIDDEN_TAGS.has(tag)) return false;
+    // In public mode, also hide all sensitive tags
+    if (!coachMode && SENSITIVE_TAGS.has(tag)) return false;
+    return true;
+  });
+}
+
+function getVisibleAttributes(coachMode: boolean) {
+  if (coachMode) return ATTRIBUTE_LABELS;
+  return ATTRIBUTE_LABELS.filter(({ key }) => key !== 'attitude');
+}
+
 function PlayerCard({
   player,
   onNameChange,
+  coachMode,
 }: {
   player: Player;
   onNameChange: (number: number, firstName: string, lastName: string) => void;
+  coachMode: boolean;
 }) {
   const [notesOpen, setNotesOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -388,7 +483,7 @@ function PlayerCard({
       {/* Attribute ratings */}
       <div className="px-5 pb-3">
         <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
-          {ATTRIBUTE_LABELS.map(({ key, label }) => (
+          {getVisibleAttributes(coachMode).map(({ key, label }) => (
             <div key={key} className="flex flex-col">
               <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide leading-none mb-0.5">
                 {label}
@@ -401,7 +496,7 @@ function PlayerCard({
 
       {/* Tags */}
       <div className="px-5 pb-3 flex flex-wrap gap-1">
-        {player.tags.map((tag) => (
+        {getVisibleTags(player.tags, coachMode).map((tag) => (
           <span
             key={tag}
             className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getTagColor(tag)}`}
@@ -411,32 +506,34 @@ function PlayerCard({
         ))}
       </div>
 
-      {/* Coach notes expandable */}
-      <div className="mt-auto border-t border-gray-100">
-        <button
-          onClick={() => setNotesOpen(!notesOpen)}
-          className="w-full px-5 py-2.5 flex items-center justify-between text-xs font-medium text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
-        >
-          <span>Coach Notes</span>
-          {notesOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
-        {notesOpen && (
-          <div className="px-5 pb-4 space-y-2">
-            <p className="text-xs text-gray-600 leading-relaxed">{player.notes}</p>
-            <div className="bg-[var(--color-rockies-purple)]/5 border border-[var(--color-rockies-purple)]/10 rounded-lg px-3 py-2">
-              <span className="text-[10px] uppercase font-semibold text-[var(--color-rockies-purple)] tracking-wide">
-                Priority
-              </span>
-              <p className="text-xs text-[var(--color-rockies-black)] mt-0.5 leading-relaxed">
-                {player.coachPriority}
-              </p>
-            </div>
+      {/* Coach notes expandable — only visible in coach mode */}
+      {coachMode && (
+        <div className="mt-auto border-t border-gray-100">
+          <button
+            onClick={() => setNotesOpen(!notesOpen)}
+            className="w-full px-5 py-2.5 flex items-center justify-between text-xs font-medium text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <span>Coach Notes</span>
+            {notesOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+          {notesOpen && (
+            <div className="px-5 pb-4 space-y-2">
+              <p className="text-xs text-gray-600 leading-relaxed">{player.notes}</p>
+              <div className="bg-[var(--color-rockies-purple)]/5 border border-[var(--color-rockies-purple)]/10 rounded-lg px-3 py-2">
+                <span className="text-[10px] uppercase font-semibold text-[var(--color-rockies-purple)] tracking-wide">
+                  Priority
+                </span>
+                <p className="text-xs text-[var(--color-rockies-black)] mt-0.5 leading-relaxed">
+                  {player.coachPriority}
+                </p>
+              </div>
 
-            {/* Multi-coach notes section */}
-            <CoachNotesSection playerNumber={player.number} />
-          </div>
-        )}
-      </div>
+              {/* Multi-coach notes section */}
+              <CoachNotesSection playerNumber={player.number} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -446,6 +543,25 @@ export default function RosterPage() {
   const [posFilter, setPosFilter] = useState('All');
   const [tierFilter, setTierFilter] = useState('All');
   const [sortBy, setSortBy] = useState<'number' | 'name' | 'avg' | 'ops'>('number');
+  const [coachMode, setCoachMode] = useState(() => localStorage.getItem(COACH_MODE_KEY) === 'true');
+  const [showPinModal, setShowPinModal] = useState(false);
+
+  const handleToggleCoachMode = useCallback(() => {
+    if (coachMode) {
+      // Turning off — no PIN needed
+      setCoachMode(false);
+      localStorage.removeItem(COACH_MODE_KEY);
+    } else {
+      // Turning on — require PIN
+      setShowPinModal(true);
+    }
+  }, [coachMode]);
+
+  const handlePinSuccess = useCallback(() => {
+    setCoachMode(true);
+    localStorage.setItem(COACH_MODE_KEY, 'true');
+    setShowPinModal(false);
+  }, []);
 
   const filtered = players
     .filter((p) => {
@@ -482,14 +598,39 @@ export default function RosterPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* PIN modal */}
+      {showPinModal && (
+        <PinModal onSuccess={handlePinSuccess} onCancel={() => setShowPinModal(false)} />
+      )}
+
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="font-heading text-3xl font-bold text-[var(--color-rockies-black)]">
-          Roster
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {players.length} players &middot; {filtered.length} shown
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="font-heading text-3xl font-bold text-[var(--color-rockies-black)]">
+              Roster
+            </h1>
+            {coachMode && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--color-rockies-purple)] text-white tracking-wide">
+                Coach Mode
+              </span>
+            )}
+          </div>
+          <p className="text-gray-500 text-sm mt-1">
+            {players.length} players &middot; {filtered.length} shown
+          </p>
+        </div>
+        <button
+          onClick={handleToggleCoachMode}
+          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+          title={coachMode ? 'Lock (exit coach mode)' : 'Unlock coach mode'}
+        >
+          {coachMode ? (
+            <Unlock className="w-4 h-4 text-[var(--color-rockies-purple)]" />
+          ) : (
+            <Lock className="w-4 h-4 text-gray-400" />
+          )}
+        </button>
       </div>
 
       {/* Filter bar */}
@@ -534,7 +675,7 @@ export default function RosterPage() {
       {/* Player grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filtered.map((player) => (
-          <PlayerCard key={player.number} player={player} onNameChange={updatePlayerName} />
+          <PlayerCard key={player.number} player={player} onNameChange={updatePlayerName} coachMode={coachMode} />
         ))}
       </div>
 
