@@ -50,7 +50,11 @@ function computeTeamStats(battingPlayers: Player[]) {
   const slg = totalAB > 0 ? totalBases / totalAB : 0;
   const ops = obp + slg;
 
-  return { avg, obp, ops, totalRuns };
+  // Compute games played (max GP across all players)
+  const gamesPlayed = battingPlayers.reduce((max, p) => Math.max(max, p.stats?.gp ?? 0), 0);
+  const runsPerGame = gamesPlayed > 0 ? totalRuns / gamesPlayed : 0;
+
+  return { avg, obp, ops, totalRuns, runsPerGame, gamesPlayed };
 }
 
 // ---------------------------------------------------------------------------
@@ -300,7 +304,7 @@ export default function StatsPage() {
             Team Stats
           </h1>
           <p className="text-xs text-rockies-black/50">
-            Spring 2026 Season -- 4 games played
+            Spring 2026 Season — {teamStats.gamesPlayed} games played
           </p>
         </div>
       </div>
@@ -311,7 +315,7 @@ export default function StatsPage() {
           { label: 'Team AVG', value: fmt(teamStats.avg) },
           { label: 'Team OBP', value: fmt(teamStats.obp) },
           { label: 'Team OPS', value: fmt(teamStats.ops) },
-          { label: 'Total Runs', value: fmtInt(teamStats.totalRuns) },
+          { label: 'Runs / Game', value: fmt(teamStats.runsPerGame, 1) },
         ].map((card) => (
           <div
             key={card.label}
@@ -335,18 +339,20 @@ export default function StatsPage() {
             Batting Leaders
           </h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {LEADER_CATEGORIES.map((cat) => {
             const leaders = getLeaders(cat, battingPlayers);
             return (
               <div
                 key={cat.label}
-                className="bg-white rounded-xl border border-rockies-silver/30 shadow-sm p-4"
+                className="bg-gray-50 rounded-xl border border-gray-200/60 shadow-sm overflow-hidden"
               >
-                <p className="text-xs font-semibold text-rockies-purple uppercase tracking-wide mb-3">
-                  {cat.label}
-                </p>
-                <div className="space-y-2">
+                <div className="bg-gray-200/80 px-4 py-1.5">
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                    {cat.label}
+                  </p>
+                </div>
+                <div className="p-3 space-y-2">
                   {leaders.map((p, i) => (
                     <div key={p.number} className="flex items-center gap-2">
                       {rankBadge(i)}
@@ -370,7 +376,7 @@ export default function StatsPage() {
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle className="w-4 h-4 text-amber-500" />
           <h2 className="font-heading font-bold text-lg text-rockies-black">
-            Needs Improvement
+            Development Focus
           </h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
