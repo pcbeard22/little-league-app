@@ -16,14 +16,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, Share2, Sparkles, FolderOpen, Loader2, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { GripVertical, Save, Share2, Sparkles, FolderOpen, Loader2, Check, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import BaseballField from '@/components/field/BaseballField';
 import InningTabs from '@/components/field/InningTabs';
 import GameSelector, { type GameInfo } from '@/components/layout/GameSelector';
 import { usePlayers } from '@/context/PlayersContext';
 import { POSITIONS, type Position, type Player } from '@/types';
 import { suggestLineup } from '@/lib/lineup-engine';
-import { saveLineup, loadLineup } from '@/lib/lineup-storage';
+import { saveLineup, loadLineup, deserializeNotes, serializeNotes, type GameNote } from '@/lib/lineup-storage';
 import { fetchAIAdjustments } from '@/lib/ai-adjustments';
 import SavedLineupsModal from '@/pages/SavedLineupsModal';
 
@@ -222,7 +222,8 @@ export default function LineupPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [loadingGame, setLoadingGame] = useState(false);
   const [showLineupsModal, setShowLineupsModal] = useState(false);
-  const [gameNotes, setGameNotes] = useState('');
+  const [gameNoteEntries, setGameNoteEntries] = useState<GameNote[]>([]);
+  const [newNoteText, setNewNoteText] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [fieldOpen, setFieldOpen] = useState(false);
@@ -261,12 +262,13 @@ export default function LineupPage() {
         if (saved) {
           setBattingOrder(saved.battingOrder);
           setPositionsByInning(saved.positionsByInning);
-          setGameNotes(saved.gameNotes ?? '');
-          if (saved.gameNotes) setNotesOpen(true);
+          const entries = deserializeNotes(saved.gameNotes ?? '');
+          setGameNoteEntries(entries);
+          if (entries.length > 0) setNotesOpen(true);
         } else {
           setBattingOrder(makeDefaultBattingOrder());
           setPositionsByInning(makeDefaultPositions());
-          setGameNotes('');
+          setGameNoteEntries([]);
         }
         setLoadedGameId(game.id);
       })
@@ -320,7 +322,7 @@ export default function LineupPage() {
         battingOrder,
         positionsByInning,
         absentPlayers: [],
-        gameNotes,
+        gameNotes: serializeNotes(gameNoteEntries),
       });
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -328,7 +330,7 @@ export default function LineupPage() {
       console.error('Failed to save lineup:', err);
       setSaveStatus('idle');
     }
-  }, [currentGameIndex, battingOrder, positionsByInning, gameNotes]);
+  }, [currentGameIndex, battingOrder, positionsByInning, gameNoteEntries]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -427,8 +429,9 @@ export default function LineupPage() {
     }
 
     // Include current game notes if any
-    if (gameNotes.trim()) {
-      recentNotes.push(gameNotes);
+    const currentNotesText = gameNoteEntries.map(n => `[${n.author}]: ${n.text}`).join('\n\n');
+    if (currentNotesText.trim()) {
+      recentNotes.push(currentNotesText);
     }
 
     // Fetch AI adjustments (returns [] on any error — non-blocking)
@@ -438,7 +441,7 @@ export default function LineupPage() {
     setBattingOrder(suggestion.battingOrder);
     setPositionsByInning(suggestion.positionsByInning);
     setAiLoading(false);
-  }, [players, currentGameIndex, gameNotes]);
+  }, [players, currentGameIndex, gameNoteEntries]);
 
   // Derive field positions for current inning
   const fieldPositions = useMemo(() => {
@@ -581,10 +584,10 @@ export default function LineupPage() {
             className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-rockies-black/70 hover:bg-rockies-purple/5 transition-colors"
           >
             <span className="flex items-center gap-2">
-              Game Notes
-              {gameNotes && !notesOpen && (
+              Game Notes{gameNoteEntries.length > 0 && ` (${gameNoteEntries.length})`}
+              {gameNoteEntries.length > 0 && !notesOpen && (
                 <span className="text-xs font-normal text-rockies-purple/50 truncate max-w-[200px]">
-                  — {gameNotes.split('\n')[0]}
+                  — {gameNoteEntries[gameNoteEntries.length - 1].text.split('\n')[0]}
                 </span>
               )}
             </span>
@@ -595,13 +598,70 @@ export default function LineupPage() {
             )}
           </button>
           {notesOpen && (
-            <div className="px-4 pb-4">
-              <textarea
-                value={gameNotes}
-                onChange={(e) => setGameNotes(e.target.value)}
-                placeholder="Game notes — strategy, observations, matchup info..."
-                className="w-full h-28 rounded-lg border border-rockies-purple/15 bg-white px-3 py-2 text-sm text-rockies-black placeholder:text-rockies-black/30 focus:outline-none focus:ring-2 focus:ring-rockies-purple/30 resize-y"
-              />
+            <div className="px-4 pb-4 space-y-3">
+              {/* Existing note entries */}
+              {gameNoteEntries.length > 0 && (
+                <div className="space-y-2">
+                  {gameNoteEntries.map((entry, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-lg border border-rockies-purple/10 px-3 py-2.5 group"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-rockies-purple">{entry.author}</span>
+                          <span className="text-xs text-rockies-black/40">
+                            {formatNoteDate(entry.date)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() =>
+                            setGameNoteEntries((prev) => prev.filter((_, i) => i !== idx))
+                          }
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-rockies-black/30 hover:text-red-500 transition-all"
+                          title="Delete note"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-rockies-black/80 whitespace-pre-wrap">{entry.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new note */}
+              <div className="space-y-2">
+                <p className="text-xs text-rockies-black/40">
+                  Adding as:{' '}
+                  <span className="font-semibold text-rockies-purple/70">
+                    {localStorage.getItem('rockies_coach_name') || 'Coach Peyton'}
+                  </span>
+                </p>
+                <textarea
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  placeholder="Add a note — strategy, observations, matchup info..."
+                  className="w-full h-20 rounded-lg border border-rockies-purple/15 bg-white px-3 py-2 text-sm text-rockies-black placeholder:text-rockies-black/30 focus:outline-none focus:ring-2 focus:ring-rockies-purple/30 resize-y"
+                />
+                <button
+                  onClick={() => {
+                    if (!newNoteText.trim()) return;
+                    const coachName = localStorage.getItem('rockies_coach_name') || 'Coach Peyton';
+                    const today = new Date().toISOString().split('T')[0];
+                    setGameNoteEntries((prev) => [
+                      ...prev,
+                      { author: coachName, date: today, text: newNoteText.trim() },
+                    ]);
+                    setNewNoteText('');
+                  }}
+                  disabled={!newNoteText.trim()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-rockies-purple hover:bg-rockies-deep-purple transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Note
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -672,4 +732,14 @@ function ordinal(n: number): string {
   if (n === 2) return '2nd';
   if (n === 3) return '3rd';
   return `${n}th`;
+}
+
+function formatNoteDate(isoDate: string): string {
+  try {
+    const [year, month, day] = isoDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return isoDate;
+  }
 }

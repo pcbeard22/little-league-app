@@ -11,6 +11,14 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 
+export interface GameNote {
+  author: string;
+  date: string;    // ISO date string like "2026-03-25"
+  text: string;
+}
+
+export type GameNoteEntry = GameNote;
+
 export interface SavedLineup {
   id: string;             // gameId like 'g5'
   gameName: string;       // "Game 5 vs Reds"
@@ -18,9 +26,27 @@ export interface SavedLineup {
   battingOrder: number[];
   positionsByInning: string[][];
   absentPlayers: number[];
-  gameNotes: string;
+  gameNotes: string;      // JSON-serialized GameNote[]
   savedAt: Date;
   updatedAt: Date;
+}
+
+export function serializeNotes(notes: GameNote[]): string {
+  return JSON.stringify(notes);
+}
+
+export function deserializeNotes(raw: string): GameNote[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // Legacy: plain string notes — migrate to attributed format
+    if (raw.trim()) {
+      return [{ author: 'Coach Peyton', date: '2026-03-25', text: raw }];
+    }
+  }
+  return [];
 }
 
 let authInitialized = false;
