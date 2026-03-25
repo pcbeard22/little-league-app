@@ -41,11 +41,13 @@ const badgeVariants = {
 function getShortName(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 0) return "";
-  const first = parts[0];
-  // If name is short enough, just return it
-  if (first.length <= 7) return first;
-  // Otherwise truncate
-  return first.slice(0, 6) + ".";
+  return parts[0]; // return full first name — font size adapts dynamically
+}
+
+function getNameFontSize(name: string): number {
+  if (name.length <= 6) return 11;
+  if (name.length <= 8) return 9;
+  return 8;
 }
 
 export default function BaseballField({
@@ -310,7 +312,7 @@ export default function BaseballField({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="white"
-                  fontSize="10"
+                  fontSize={getNameFontSize(displayName)}
                   fontWeight="600"
                   fontFamily="system-ui, -apple-system, sans-serif"
                   style={{ pointerEvents: "none" }}

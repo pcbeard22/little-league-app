@@ -560,15 +560,15 @@ export default function LineupPage() {
               {/* Collapsible header — mobile only */}
               <button
                 onClick={() => setFieldOpen((o) => !o)}
-                className="lg:hidden w-full flex items-center justify-center gap-2 mt-2 mb-1 py-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+                className="lg:hidden w-full flex items-center justify-center gap-2 mt-2 mb-1 py-2.5 px-4 rounded-lg bg-rockies-purple/10 border border-rockies-purple/30 transition-colors active:bg-rockies-purple/20"
               >
-                <h2 className="font-heading font-semibold text-sm text-rockies-black/60">
-                  Field — {ordinal(currentInning)} Inning
+                <h2 className="font-heading font-semibold text-sm text-rockies-purple">
+                  {fieldOpen ? 'Tap to Hide Field' : 'Tap to Show Field'}
                 </h2>
                 {fieldOpen ? (
-                  <ChevronUp className="w-4 h-4 text-rockies-black/40" />
+                  <ChevronUp className="w-4 h-4 text-rockies-purple" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-rockies-black/40" />
+                  <ChevronDown className="w-4 h-4 text-rockies-purple" />
                 )}
               </button>
 

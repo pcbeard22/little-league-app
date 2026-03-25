@@ -10,10 +10,10 @@ import type { AIAdjustment } from '@/lib/ai-adjustments';
 const PITCHER_DEPTH: Record<number, number> = {
   7: 100,   // Rodney — ace
   10: 95,   // Carson — ace
-  8: 70,    // Bennett — solid
-  9: 65,    // Kellen — solid
-  11: 40,   // Riley — other
-  3: 35,    // Leo — other
+  9: 75,    // Kellen — strong
+  8: 60,    // Bennett — solid
+  11: 40,   // Riley — as needed
+  3: 35,    // Leo — as needed
   5: 15,    // Hudson — possible
 };
 
@@ -220,7 +220,7 @@ export function suggestLineup(
   // Pitchers who started last game drop to the bottom of the depth chart.
   // Not a hard rule — they CAN pitch, but we prefer fresh arms.
   const lastPitcherSet = new Set(lastGamePitcherNumbers ?? []);
-  const pitcherDepthOrder = [7, 10, 8, 9, 11, 3, 5]; // full depth chart by jersey #
+  const pitcherDepthOrder = [7, 10, 9, 8, 11, 3, 5]; // full depth chart by jersey #
 
   // Sort: fresh pitchers first, last-game pitchers last (but still available)
   const sortedPitchers = [...pitcherDepthOrder].sort((a, b) => {

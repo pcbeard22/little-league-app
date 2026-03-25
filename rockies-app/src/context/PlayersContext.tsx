@@ -10,6 +10,44 @@ import {
 } from '@/lib/player-storage';
 import { seedFirebase } from '@/lib/seed-data';
 
+// ---------------------------------------------------------------------------
+// localStorage name cache helpers
+// ---------------------------------------------------------------------------
+const NAME_CACHE_KEY = 'rockies_player_names';
+
+type NameCache = Record<number, { firstName: string; lastName: string }>;
+
+function loadNameCache(): NameCache {
+  try {
+    const raw = localStorage.getItem(NAME_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveNameCache(cache: NameCache): void {
+  try {
+    localStorage.setItem(NAME_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // localStorage full — non-critical
+  }
+}
+
+function applyNameCache(players: Player[]): Player[] {
+  const cache = loadNameCache();
+  if (Object.keys(cache).length === 0) return players;
+  return players.map((p) => {
+    const cached = cache[p.number];
+    if (cached) {
+      return { ...p, firstName: cached.firstName, lastName: cached.lastName };
+    }
+    return p;
+  });
+}
+
+// ---------------------------------------------------------------------------
+
 interface PlayersContextValue {
   players: Player[];
   loading: boolean;
@@ -23,7 +61,7 @@ interface PlayersContextValue {
 const PlayersContext = createContext<PlayersContextValue | null>(null);
 
 export function PlayersProvider({ children }: { children: ReactNode }) {
-  const [players, setPlayers] = useState<Player[]>([...defaultPlayers]);
+  const [players, setPlayers] = useState<Player[]>(() => applyNameCache([...defaultPlayers]));
   const [loading, setLoading] = useState(true);
   const [coachNotes, setCoachNotes] = useState<Record<number, CoachNote[]>>({});
 
@@ -41,7 +79,8 @@ export function PlayersProvider({ children }: { children: ReactNode }) {
 
         if (!cancelled) {
           if (firebasePlayers && firebasePlayers.length > 0) {
-            setPlayers(firebasePlayers);
+            // Apply any locally-cached name overrides so edits aren't lost
+            setPlayers(applyNameCache(firebasePlayers));
           }
           // If loadPlayers returned null, seedFirebase already saved the defaults,
           // so the local state (defaultPlayers) is correct.
@@ -64,6 +103,11 @@ export function PlayersProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updatePlayerName = useCallback((number: number, firstName: string, lastName: string) => {
+    // Update localStorage name cache immediately (survives refresh flicker)
+    const cache = loadNameCache();
+    cache[number] = { firstName, lastName };
+    saveNameCache(cache);
+
     setPlayers((prev) => {
       const next = prev.map((p) =>
         p.number === number ? { ...p, firstName, lastName } : p,

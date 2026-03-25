@@ -40,8 +40,11 @@ const RULE_SECTIONS: RuleSection[] = [
     icon: <Target className="w-5 h-5" />,
     color: 'border-red-200 bg-red-50/50',
     rules: [
-      { text: 'Ace pitcher (Rodney #7) pitches innings 1-3, then moves to SS' },
-      { text: 'Second pitcher (Carson #10) pitches innings 4-6' },
+      { text: 'Ace pitchers: Rodney #7, Carson #10' },
+      { text: 'Strong: Kellen #9' },
+      { text: 'Solid: Bennett #8' },
+      { text: 'As needed: Riley #11, Leo #3' },
+      { text: 'Possible: Hudson #5' },
       { text: 'Pitchers who started last game are deprioritized (not a hard rule)' },
       { text: 'Pitchers must pitch consecutive innings \u2014 no gaps' },
     ],
@@ -211,14 +214,28 @@ export default function LogicPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-8">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Brain className="w-6 h-6 text-rockies-purple" />
-          Engine Logic
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          How the auto-suggest engine builds lineups, and how to influence it.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Brain className="w-6 h-6 text-rockies-purple" />
+            Engine Logic
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            How the auto-suggest engine builds lineups, and how to influence it.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            sessionStorage.removeItem(PIN_VERIFIED_KEY);
+            setPinVerified(false);
+            setPinInput('');
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rockies-purple bg-rockies-purple/10 hover:bg-rockies-purple/20 transition-colors"
+          title="Lock page"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          Lock
+        </button>
       </div>
 
       {/* ===== Section 1: Current Rules ===== */}

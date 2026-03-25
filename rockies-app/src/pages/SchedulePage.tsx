@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, ChevronRight, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { INITIAL_GAMES } from '@/data/schedule';
+import { getSortedStandings, getTeamRecord, formatRecord } from '@/data/standings';
 import type { GameData } from '@/lib/player-storage';
 
 // ---------------------------------------------------------------------------
@@ -65,6 +66,9 @@ export default function SchedulePage() {
     if (activeTab === 'upcoming') return g.status === 'upcoming';
     return true;
   });
+
+  // Standings data
+  const sortedStandings = getSortedStandings();
 
   return (
     <div className="space-y-6">
@@ -136,70 +140,153 @@ export default function SchedulePage() {
             </span>
           </div>
 
-          {filteredGames.map((game) => (
-            <div
-              key={game.id}
-              className="bg-white rounded-xl border border-rockies-silver/30 shadow-sm p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-heading font-bold text-rockies-black">
-                    vs {game.opponent}
-                  </p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center gap-1 text-xs text-rockies-black/50">
-                      <Calendar className="w-3 h-3" />
-                      {game.date}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-rockies-black/50">
-                      <Clock className="w-3 h-3" />
-                      {game.time}
-                    </span>
+          {filteredGames.map((game) => {
+            const opponentRecord = getTeamRecord(game.opponent);
+            return (
+              <div
+                key={game.id}
+                className="bg-white rounded-xl border border-rockies-silver/30 shadow-sm p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-heading font-bold text-rockies-black">
+                        vs {game.opponent}
+                      </p>
+                      {opponentRecord && game.status === 'upcoming' && (
+                        <span className="text-xs text-rockies-black/40 font-medium">
+                          ({formatRecord(opponentRecord)})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="flex items-center gap-1 text-xs text-rockies-black/50">
+                        <Calendar className="w-3 h-3" />
+                        {game.date}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-rockies-black/50">
+                        <Clock className="w-3 h-3" />
+                        {game.time}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                    game.status === 'completed'
-                      ? 'bg-rockies-purple/10 text-rockies-purple'
-                      : 'bg-purple-100 text-purple-700'
-                  }`}
-                >
-                  {game.status === 'completed' ? 'Final' : 'Upcoming'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-xs text-rockies-black/50">
-                    <MapPin className="w-3 h-3" />
-                    {game.location === 'home' ? 'Home' : 'Away'}
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      game.status === 'completed'
+                        ? 'bg-rockies-purple/10 text-rockies-purple'
+                        : 'bg-purple-100 text-purple-700'
+                    }`}
+                  >
+                    {game.status === 'completed' ? 'Final' : 'Upcoming'}
                   </span>
-                  {game.score && game.result && (
-                    <span
-                      className={`text-sm font-bold ${
-                        game.result === 'W'
-                          ? 'text-green-600'
-                          : game.result === 'L'
-                          ? 'text-red-500'
-                          : 'text-gray-500'
-                      }`}
-                    >
-                      {game.result}{' '}
-                      {game.score.us}-{game.score.them}
-                    </span>
-                  )}
                 </div>
 
-                <Link
-                  to="/lineup"
-                  className="flex items-center gap-1 text-xs font-semibold text-rockies-purple hover:text-purple-800 transition-colors"
-                >
-                  {game.status === 'completed' ? 'View Lineup' : 'Edit Lineup'}
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-xs text-rockies-black/50">
+                      <MapPin className="w-3 h-3" />
+                      {game.location === 'home' ? 'Home' : 'Away'}
+                    </span>
+                    {game.score && game.result && (
+                      <span
+                        className={`text-sm font-bold ${
+                          game.result === 'W'
+                            ? 'text-green-600'
+                            : game.result === 'L'
+                            ? 'text-red-500'
+                            : 'text-gray-500'
+                        }`}
+                      >
+                        {game.result}{' '}
+                        {game.score.us}-{game.score.them}
+                      </span>
+                    )}
+                  </div>
+
+                  <Link
+                    to="/lineup"
+                    className="flex items-center gap-1 text-xs font-semibold text-rockies-purple hover:text-purple-800 transition-colors"
+                  >
+                    {game.status === 'completed' ? 'View Lineup' : 'Edit Lineup'}
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Standings Table */}
+      <div className="bg-white rounded-2xl border border-rockies-silver/30 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-rockies-silver/20 flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-rockies-purple" />
+          <h2 className="font-heading font-bold text-lg text-rockies-black">
+            AAA Standings
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-rockies-silver/20 bg-gray-50/80">
+                <th className="text-left px-4 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider w-10">#</th>
+                <th className="text-left px-4 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">Team</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">W</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">L</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">T</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">Win%</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">RF</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">RA</th>
+                <th className="text-center px-3 py-3 font-semibold text-rockies-black/60 text-xs uppercase tracking-wider">Diff</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedStandings.map((team, idx) => {
+                const totalGames = team.wins + team.losses + team.ties;
+                const winPct = totalGames > 0 && (team.wins + team.losses) > 0
+                  ? (team.wins / (team.wins + team.losses)).toFixed(3)
+                  : '-';
+                const diff = team.runsFor - team.runsAgainst;
+                const isRockies = team.team === 'Rockies';
+
+                return (
+                  <tr
+                    key={team.coachName}
+                    className={`border-b border-rockies-silver/10 transition-colors ${
+                      isRockies
+                        ? 'bg-rockies-purple/8 font-semibold'
+                        : 'hover:bg-gray-50/50'
+                    }`}
+                  >
+                    <td className={`px-4 py-3 ${isRockies ? 'text-rockies-purple font-bold' : 'text-rockies-black/40'}`}>
+                      {idx + 1}
+                    </td>
+                    <td className={`px-4 py-3 ${isRockies ? 'text-rockies-purple' : 'text-rockies-black'}`}>
+                      <div className="flex items-center gap-2">
+                        {isRockies && (
+                          <span className="w-2 h-2 rounded-full bg-rockies-purple shrink-0" />
+                        )}
+                        {team.team}
+                      </div>
+                    </td>
+                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.wins}</td>
+                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.losses}</td>
+                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.ties}</td>
+                    <td className="text-center px-3 py-3 text-rockies-black/80 font-mono text-xs">
+                      {winPct}
+                    </td>
+                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.runsFor}</td>
+                    <td className="text-center px-3 py-3 text-rockies-black/80">{team.runsAgainst}</td>
+                    <td className={`text-center px-3 py-3 font-medium ${
+                      diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-500' : 'text-rockies-black/40'
+                    }`}>
+                      {diff > 0 ? `+${diff}` : diff === 0 && totalGames === 0 ? '-' : diff}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

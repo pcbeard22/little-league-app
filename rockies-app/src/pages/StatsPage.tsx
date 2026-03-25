@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BarChart3, Trophy, ArrowUpDown, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
+import { BarChart3, Trophy, ArrowUpDown, ChevronUp, ChevronDown, AlertTriangle, X } from 'lucide-react';
 import { usePlayers } from '@/context/PlayersContext';
 import type { Player } from '@/types';
 
@@ -202,6 +202,23 @@ function getBottomPerformers(cat: NeedsImprovementCategory, battingPlayers: Play
 }
 
 // ---------------------------------------------------------------------------
+// Expanded category modal info
+// ---------------------------------------------------------------------------
+interface ExpandedCategoryInfo {
+  label: string;
+  getValue: (p: Player) => number;
+  format: (v: number) => string;
+  /** 'leader' uses purple theme, 'development' uses amber theme */
+  theme: 'leader' | 'development';
+  /**
+   * Sort direction for ranking:
+   * 'desc' = highest first (#1 = highest value)
+   * 'asc' = lowest first (#1 = lowest value)
+   */
+  sortDirection: 'asc' | 'desc';
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 export default function StatsPage() {
@@ -213,6 +230,18 @@ export default function StatsPage() {
   const [battingSortDir, setBattingSortDir] = useState<'asc' | 'desc'>('desc');
   const [pitchingSortKey, setPitchingSortKey] = useState<PitchingKey>('era');
   const [pitchingSortDir, setPitchingSortDir] = useState<'asc' | 'desc'>('asc');
+  const [expandedCategory, setExpandedCategory] = useState<ExpandedCategoryInfo | null>(null);
+
+  // Full ranked list for the expanded modal
+  const rankedPlayers = useMemo(() => {
+    if (!expandedCategory) return [];
+    const { getValue, sortDirection } = expandedCategory;
+    return [...battingPlayers].sort((a, b) =>
+      sortDirection === 'desc'
+        ? getValue(b) - getValue(a)
+        : getValue(a) - getValue(b),
+    );
+  }, [expandedCategory, battingPlayers]);
 
   // Sort batting players
   const sortedBatting = useMemo(() => {
@@ -346,7 +375,14 @@ export default function StatsPage() {
             return (
               <div
                 key={cat.label}
-                className="bg-gray-50 rounded-xl border border-gray-200/60 shadow-sm overflow-hidden"
+                onClick={() => setExpandedCategory({
+                  label: cat.label,
+                  getValue: cat.getValue,
+                  format: cat.format,
+                  theme: 'leader',
+                  sortDirection: cat.lowerIsBetter ? 'asc' : 'desc',
+                })}
+                className="bg-gray-50 rounded-xl border border-gray-200/60 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
               >
                 <div className="bg-gray-200/80 px-4 py-1.5">
                   <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -386,7 +422,17 @@ export default function StatsPage() {
             return (
               <div
                 key={cat.label}
-                className="bg-amber-50 rounded-xl border border-amber-200/60 shadow-sm overflow-hidden"
+                onClick={() => setExpandedCategory({
+                  label: cat.label,
+                  getValue: cat.getValue,
+                  format: cat.format,
+                  theme: 'development',
+                  // Development focus: show worst first
+                  // For highestIsWorst (SO): worst = highest, so descending
+                  // For !highestIsWorst (QAB, BA/RISP, OBP): worst = lowest, so ascending
+                  sortDirection: cat.highestIsWorst ? 'desc' : 'asc',
+                })}
+                className="bg-amber-50 rounded-xl border border-amber-200/60 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
               >
                 <div className="bg-amber-400/80 px-4 py-1.5">
                   <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">
@@ -581,6 +627,92 @@ export default function StatsPage() {
           </div>
         </div>
       </div>
+
+      {/* Expanded Category Modal */}
+      {expandedCategory && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setExpandedCategory(null)}
+        >
+          <div
+            className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              className={`px-5 py-3.5 flex items-center justify-between ${
+                expandedCategory.theme === 'leader'
+                  ? 'bg-rockies-purple text-white'
+                  : 'bg-amber-500 text-amber-950'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {expandedCategory.theme === 'leader' ? (
+                  <Trophy className="w-4 h-4" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4" />
+                )}
+                <h3 className="font-heading font-bold text-lg">
+                  {expandedCategory.label} Rankings
+                </h3>
+              </div>
+              <button
+                onClick={() => setExpandedCategory(null)}
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Player List */}
+            <div className="max-h-[70vh] overflow-y-auto">
+              {rankedPlayers.map((p, i) => {
+                const total = rankedPlayers.length;
+                let badgeClass: string;
+                if (expandedCategory.theme === 'leader') {
+                  if (i === 0) badgeClass = 'bg-yellow-400 text-yellow-900';
+                  else if (i === 1) badgeClass = 'bg-gray-300 text-gray-700';
+                  else if (i === 2) badgeClass = 'bg-amber-600 text-amber-100';
+                  else if (i >= total - 3) badgeClass = 'bg-amber-200 text-amber-800';
+                  else badgeClass = 'bg-gray-100 text-gray-500';
+                } else {
+                  // Development focus: top 3 are the worst performers (amber), bottom 3 are the best (gold/silver/bronze)
+                  if (i < 3) badgeClass = 'bg-amber-200 text-amber-800';
+                  else if (i >= total - 3) badgeClass = 'bg-emerald-100 text-emerald-700';
+                  else badgeClass = 'bg-gray-100 text-gray-500';
+                }
+
+                return (
+                  <div
+                    key={p.number}
+                    className={`flex items-center gap-3 px-5 py-2.5 ${
+                      i < total - 1 ? 'border-b border-gray-100' : ''
+                    } ${i === 0 ? '' : ''}`}
+                  >
+                    <span
+                      className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 ${badgeClass}`}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="text-sm text-rockies-black truncate flex-1">
+                      {p.firstName} {p.lastName.charAt(0)}.
+                    </span>
+                    <span
+                      className={`text-sm font-bold tabular-nums ${
+                        expandedCategory.theme === 'leader'
+                          ? 'text-rockies-purple'
+                          : 'text-amber-700'
+                      }`}
+                    >
+                      {expandedCategory.format(expandedCategory.getValue(p))}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
