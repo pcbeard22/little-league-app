@@ -152,6 +152,7 @@ interface LeaderCategory {
 
 const LEADER_CATEGORIES: LeaderCategory[] = [
   { label: 'AVG', getValue: (p) => p.stats?.avg ?? 0, format: (v) => fmt(v) },
+  { label: 'OBP', getValue: (p) => p.stats?.obp ?? 0, format: (v) => fmt(v) },
   { label: 'OPS', getValue: (p) => p.stats?.ops ?? 0, format: (v) => fmt(v) },
   { label: 'XBH', getValue: (p) => (p.stats?.doubles ?? 0) + (p.stats?.triples ?? 0) + (p.stats?.hr ?? 0), format: fmtInt },
   { label: 'RBI', getValue: (p) => p.stats?.rbi ?? 0, format: fmtInt },
