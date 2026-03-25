@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BarChart3, Trophy, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { BarChart3, Trophy, ArrowUpDown, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import { usePlayers } from '@/context/PlayersContext';
 import type { Player } from '@/types';
 
@@ -73,7 +73,10 @@ type BattingKey =
   | 'bb'
   | 'so'
   | 'kl'
-  | 'sb';
+  | 'sb'
+  | 'qab'
+  | 'barisp'
+  | 'lob';
 
 interface BattingColumn {
   key: BattingKey;
@@ -103,6 +106,9 @@ const BATTING_COLUMNS: BattingColumn[] = [
   { key: 'so', label: 'SO', getValue: (p) => p.stats?.so ?? 0, getNumericValue: (p) => p.stats?.so ?? 0, format: fmtInt, higherIsBetter: false, isRate: false },
   { key: 'kl', label: 'K-L', getValue: (p) => p.stats?.kl ?? 0, getNumericValue: (p) => p.stats?.kl ?? 0, format: fmtInt, higherIsBetter: false, isRate: false },
   { key: 'sb', label: 'SB', getValue: (p) => p.stats?.sb ?? 0, getNumericValue: (p) => p.stats?.sb ?? 0, format: fmtInt, higherIsBetter: true, isRate: false },
+  { key: 'qab', label: 'QAB%', getValue: (p) => p.stats?.qab ?? 0, getNumericValue: (p) => p.stats?.qab ?? 0, format: (v) => `${v.toFixed(1)}%`, higherIsBetter: true, isRate: true },
+  { key: 'barisp', label: 'BA/RISP', getValue: (p) => p.stats?.barisp ?? 0, getNumericValue: (p) => p.stats?.barisp ?? 0, format: (v) => fmt(v), higherIsBetter: true, isRate: true },
+  { key: 'lob', label: 'LOB', getValue: (p) => p.stats?.lob ?? 0, getNumericValue: (p) => p.stats?.lob ?? 0, format: fmtInt, higherIsBetter: false, isRate: false },
 ];
 
 // ---------------------------------------------------------------------------
@@ -146,8 +152,10 @@ const LEADER_CATEGORIES: LeaderCategory[] = [
   { label: 'XBH', getValue: (p) => (p.stats?.doubles ?? 0) + (p.stats?.triples ?? 0) + (p.stats?.hr ?? 0), format: fmtInt },
   { label: 'RBI', getValue: (p) => p.stats?.rbi ?? 0, format: fmtInt },
   { label: 'SB', getValue: (p) => p.stats?.sb ?? 0, format: fmtInt },
+  { label: 'QAB%', getValue: (p) => p.stats?.qab ?? 0, format: (v) => `${v.toFixed(1)}%` },
+  { label: 'BA/RISP', getValue: (p) => p.stats?.barisp ?? 0, format: (v) => fmt(v) },
   { label: 'SO', getValue: (p) => p.stats?.so ?? 0, format: fmtInt, lowerIsBetter: true },
-  { label: 'K-L', getValue: (p) => p.stats?.kl ?? 0, format: fmtInt, lowerIsBetter: true },
+  { label: 'LOB', getValue: (p) => p.stats?.lob ?? 0, format: fmtInt, lowerIsBetter: true },
 ];
 
 function getLeaders(cat: LeaderCategory, battingPlayers: Player[]) {
@@ -156,6 +164,34 @@ function getLeaders(cat: LeaderCategory, battingPlayers: Player[]) {
       cat.lowerIsBetter
         ? cat.getValue(a) - cat.getValue(b)
         : cat.getValue(b) - cat.getValue(a),
+    )
+    .slice(0, 3);
+}
+
+// ---------------------------------------------------------------------------
+// Needs Improvement categories (bottom performers)
+// ---------------------------------------------------------------------------
+interface NeedsImprovementCategory {
+  label: string;
+  getValue: (p: Player) => number;
+  format: (v: number) => string;
+  /** If true, HIGHEST values are worst (e.g. strikeouts). Otherwise lowest values are worst. */
+  highestIsWorst: boolean;
+}
+
+const NEEDS_IMPROVEMENT_CATEGORIES: NeedsImprovementCategory[] = [
+  { label: 'QAB%', getValue: (p) => p.stats?.qab ?? 0, format: (v) => `${v.toFixed(1)}%`, highestIsWorst: false },
+  { label: 'BA/RISP', getValue: (p) => p.stats?.barisp ?? 0, format: (v) => fmt(v), highestIsWorst: false },
+  { label: 'OBP', getValue: (p) => p.stats?.obp ?? 0, format: (v) => fmt(v), highestIsWorst: false },
+  { label: 'SO', getValue: (p) => p.stats?.so ?? 0, format: fmtInt, highestIsWorst: true },
+];
+
+function getBottomPerformers(cat: NeedsImprovementCategory, battingPlayers: Player[]) {
+  return [...battingPlayers]
+    .sort((a, b) =>
+      cat.highestIsWorst
+        ? cat.getValue(b) - cat.getValue(a)   // most strikeouts first
+        : cat.getValue(a) - cat.getValue(b),   // lowest QAB%/BA-RISP/OBP first
     )
     .slice(0, 3);
 }
@@ -299,7 +335,7 @@ export default function StatsPage() {
             Batting Leaders
           </h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-3">
           {LEADER_CATEGORIES.map((cat) => {
             const leaders = getLeaders(cat, battingPlayers);
             return (
@@ -318,6 +354,48 @@ export default function StatsPage() {
                         {p.firstName} {p.lastName.charAt(0)}.
                       </span>
                       <span className="text-sm font-bold text-rockies-purple">
+                        {cat.format(cat.getValue(p))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Needs Improvement */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <h2 className="font-heading font-bold text-lg text-rockies-black">
+            Needs Improvement
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {NEEDS_IMPROVEMENT_CATEGORIES.map((cat) => {
+            const bottom = getBottomPerformers(cat, battingPlayers);
+            return (
+              <div
+                key={cat.label}
+                className="bg-amber-50 rounded-xl border border-amber-200/60 shadow-sm overflow-hidden"
+              >
+                <div className="bg-amber-400/80 px-4 py-1.5">
+                  <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">
+                    {cat.label}
+                  </p>
+                </div>
+                <div className="p-3 space-y-2">
+                  {bottom.map((p, i) => (
+                    <div key={p.number} className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-amber-200 text-amber-800">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-rockies-black truncate flex-1">
+                        {p.firstName} {p.lastName.charAt(0)}.
+                      </span>
+                      <span className="text-sm font-bold text-amber-700">
                         {cat.format(cat.getValue(p))}
                       </span>
                     </div>

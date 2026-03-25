@@ -20,10 +20,14 @@ interface AdjustmentsResponse {
 export async function fetchAIAdjustments(
   gameNotes: string[],
   players: Player[],
+  rosterNotes?: string[],
+  lineupPatterns?: string,
+  logicUpdates?: string[],
 ): Promise<AIAdjustment[]> {
   // Don't call if there are no notes worth analyzing
   const meaningfulNotes = gameNotes.filter((n) => n.trim().length > 0);
-  if (meaningfulNotes.length === 0) return [];
+  const meaningfulRosterNotes = (rosterNotes ?? []).filter((n) => n.trim().length > 0);
+  if (meaningfulNotes.length === 0 && meaningfulRosterNotes.length === 0) return [];
 
   try {
     const playerSummaries = players.map((p) => ({
@@ -34,13 +38,25 @@ export async function fetchAIAdjustments(
       notes: p.notes,
     }));
 
+    const payload: Record<string, unknown> = {
+      gameNotes: meaningfulNotes,
+      playerSummaries,
+    };
+    if (meaningfulRosterNotes.length > 0) {
+      payload.rosterNotes = meaningfulRosterNotes;
+    }
+    if (lineupPatterns?.trim()) {
+      payload.lineupPatterns = lineupPatterns;
+    }
+    const meaningfulLogicUpdates = (logicUpdates ?? []).filter((u) => u.trim().length > 0);
+    if (meaningfulLogicUpdates.length > 0) {
+      payload.logicUpdates = meaningfulLogicUpdates;
+    }
+
     const response = await fetch('/.netlify/functions/suggest-adjustments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        gameNotes: meaningfulNotes,
-        playerSummaries,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) return [];

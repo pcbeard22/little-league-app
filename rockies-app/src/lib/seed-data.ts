@@ -53,7 +53,7 @@ const DEFAULT_DEPTH_CHARTS: DepthCharts = {
  */
 // Bump this version whenever player stats are updated from a new CSV.
 // If Firebase has an older version (or none), stats get re-synced.
-const STATS_VERSION = 2; // v2 = 6-game stats (Mar 25 2026)
+const STATS_VERSION = 3; // v3 = added QAB%, BA/RISP, LOB stats (Mar 25 2026)
 
 export async function seedFirebase(): Promise<void> {
   // Seed players if empty

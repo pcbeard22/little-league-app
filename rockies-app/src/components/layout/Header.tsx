@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Mountain, LayoutGrid, Calendar, Users, BarChart3, Menu, X } from 'lucide-react';
+import { Mountain, LayoutGrid, Calendar, Users, BarChart3, Brain, Menu, X } from 'lucide-react';
 
 const navItems = [
   { to: '/lineup', label: 'Lineup', icon: LayoutGrid },
   { to: '/schedule', label: 'Schedule', icon: Calendar },
   { to: '/roster', label: 'Roster', icon: Users },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
+  { to: '/logic', label: 'Logic', icon: Brain },
 ];
 
 export default function Header() {

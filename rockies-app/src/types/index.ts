@@ -51,6 +51,9 @@ export interface BattingStats {
   hbp: number
   sb: number
   cs: number
+  qab: number       // Quality at bats percentage (0-100)
+  barisp: number    // Batting average with RISP (0-1.000)
+  lob: number       // Runners left on base (integer)
 }
 
 export interface PitchingStats {

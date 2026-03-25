@@ -9,6 +9,9 @@ interface PlayerSummary {
 interface RequestBody {
   gameNotes: string[];
   playerSummaries: PlayerSummary[];
+  rosterNotes?: string[];
+  lineupPatterns?: string;
+  logicUpdates?: string[];
 }
 
 interface AIAdjustment {
@@ -47,9 +50,13 @@ export async function handler(event: NetlifyEvent): Promise<NetlifyResponse> {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { gameNotes, playerSummaries } = body;
+  const { gameNotes, playerSummaries, rosterNotes, lineupPatterns, logicUpdates } = body;
 
-  if (!gameNotes || !Array.isArray(gameNotes) || gameNotes.length === 0) {
+  const hasGameNotes = gameNotes && Array.isArray(gameNotes) && gameNotes.length > 0;
+  const hasRosterNotes = rosterNotes && Array.isArray(rosterNotes) && rosterNotes.length > 0;
+  const hasLogicUpdates = logicUpdates && Array.isArray(logicUpdates) && logicUpdates.length > 0;
+
+  if (!hasGameNotes && !hasRosterNotes && !hasLogicUpdates) {
     return { statusCode: 200, body: JSON.stringify({ adjustments: [] }) };
   }
 
@@ -58,17 +65,50 @@ export async function handler(event: NetlifyEvent): Promise<NetlifyResponse> {
     .map((p) => `#${p.number} ${p.name} — ${p.positions} (${p.tier}) | Notes: ${p.notes}`)
     .join('\n');
 
-  const notesText = gameNotes
-    .map((note, i) => `Game ${i + 1} notes:\n${note}`)
-    .join('\n\n');
+  const notesText = hasGameNotes
+    ? gameNotes.map((note, i) => `Game ${i + 1} notes:\n${note}`).join('\n\n')
+    : '(No recent game notes)';
 
-  const systemPrompt = `You are a little league baseball assistant. Analyze these recent game notes from the coach and return position fitness score adjustments for the upcoming game.
+  const rosterNotesText = hasRosterNotes
+    ? rosterNotes.join('\n\n')
+    : '';
+
+  const lineupPatternsText = lineupPatterns?.trim() || '';
+
+  let contextSections = `Recent game notes:
+${notesText}`;
+
+  if (rosterNotesText) {
+    contextSections += `
+
+Roster coach notes (observations about individual players from multiple coaches):
+${rosterNotesText}`;
+  }
+
+  if (lineupPatternsText) {
+    contextSections += `
+
+Recent lineup patterns (how the coach has deployed players in recent games, innings 1-5 only):
+${lineupPatternsText}`;
+  }
+
+  const logicUpdatesText = hasLogicUpdates
+    ? logicUpdates.join('\n')
+    : '';
+
+  if (logicUpdatesText) {
+    contextSections += `
+
+Coach's logic updates and adjustments (these are explicit coach instructions that should be weighted heavily):
+${logicUpdatesText}`;
+  }
+
+  const systemPrompt = `You are a little league baseball assistant. Analyze the coach's recent game notes, roster observations, and lineup deployment patterns to return position fitness score adjustments for the upcoming game.
 
 Players on the team:
 ${playerList}
 
-Recent game notes:
-${notesText}
+${contextSections}
 
 Return a JSON array of adjustments. Each adjustment has:
 - playerNumber: jersey number
@@ -76,7 +116,9 @@ Return a JSON array of adjustments. Each adjustment has:
 - adjustment: a number from -20 to +20 (negative = worse fit, positive = better fit based on recent performance)
 - reason: brief explanation
 
-Only return adjustments where the game notes contain clear evidence. Don't make adjustments for things not mentioned in notes. Return an empty array if notes don't contain actionable information.
+Consider all available information — game notes, roster coach observations, and lineup trends — to make informed adjustments. If a player has been consistently placed at a position across recent games, that indicates coach confidence. If roster notes mention specific strengths or weaknesses, factor those in.
+
+Only return adjustments where the notes or patterns contain clear evidence. Don't make adjustments for things not mentioned. Return an empty array if there's no actionable information.
 
 Respond with ONLY valid JSON, no markdown or explanation.`;
 

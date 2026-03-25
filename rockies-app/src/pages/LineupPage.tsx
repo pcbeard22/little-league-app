@@ -23,8 +23,10 @@ import GameSelector, { type GameInfo } from '@/components/layout/GameSelector';
 import { usePlayers } from '@/context/PlayersContext';
 import { POSITIONS, type Position, type Player } from '@/types';
 import { suggestLineup } from '@/lib/lineup-engine';
-import { saveLineup, loadLineup, deserializeNotes, serializeNotes, type GameNote } from '@/lib/lineup-storage';
+import { saveLineup, loadLineup, deserializeNotes, serializeNotes, type GameNote, type SavedLineup } from '@/lib/lineup-storage';
 import { fetchAIAdjustments } from '@/lib/ai-adjustments';
+import { fetchCoachNotes } from '@/lib/coach-notes';
+import { loadLogicUpdates } from '@/lib/logic-storage';
 import SavedLineupsModal from '@/pages/SavedLineupsModal';
 
 // ---------------------------------------------------------------------------
@@ -401,8 +403,9 @@ export default function LineupPage() {
 
     let lastPitchers: number[] = [];
     const recentNotes: string[] = [];
+    const recentSaved: { gameIndex: number; saved: SavedLineup }[] = [];
 
-    // Collect notes and pitcher data from previous games (up to 3)
+    // Collect notes, pitcher data, and saved lineups from previous games (up to 3)
     const startIdx = Math.max(0, currentGameIndex - 3);
     for (let gi = startIdx; gi < currentGameIndex; gi++) {
       const gid = MOCK_GAMES[gi]?.id;
@@ -410,6 +413,8 @@ export default function LineupPage() {
       try {
         const saved = await loadLineup(gid);
         if (saved) {
+          recentSaved.push({ gameIndex: gi, saved });
+
           // Collect game notes
           if (saved.gameNotes?.trim()) {
             recentNotes.push(saved.gameNotes);
@@ -438,8 +443,76 @@ export default function LineupPage() {
       recentNotes.push(currentNotesText);
     }
 
+    // Load roster coach notes for all players
+    const rosterNotes: string[] = [];
+    try {
+      for (const p of players) {
+        const notes = await fetchCoachNotes(p.number);
+        if (notes.length > 0) {
+          const playerNotes = notes.map(n => `[${n.coachName} on ${p.firstName} ${p.lastName}]: ${n.note}`).join('\n');
+          rosterNotes.push(playerNotes);
+        }
+      }
+    } catch {
+      // Silently continue without roster notes
+    }
+
+    // Extract position patterns from recent games (innings 1-5 only, skip inning 6)
+    let lineupPatterns = '';
+    if (recentSaved.length > 0) {
+      const patternLines: string[] = [];
+      for (const { gameIndex, saved } of recentSaved) {
+        const game = MOCK_GAMES[gameIndex];
+        if (!game) continue;
+
+        const playerPatterns: string[] = [];
+        for (const boIdx of saved.battingOrder) {
+          const p = players[boIdx];
+          if (!p) continue;
+
+          // Collect positions for innings 1-5 only (indices 0-4)
+          const inningPositions = saved.positionsByInning[boIdx]?.slice(0, 5) ?? [];
+          if (inningPositions.length === 0) continue;
+
+          // Compress consecutive same positions: e.g. SS(1-3), 2B(4-5)
+          const runs: { pos: string; start: number; end: number }[] = [];
+          for (let inn = 0; inn < inningPositions.length; inn++) {
+            const pos = inningPositions[inn] ?? 'BN';
+            if (runs.length > 0 && runs[runs.length - 1].pos === pos) {
+              runs[runs.length - 1].end = inn + 1;
+            } else {
+              runs.push({ pos, start: inn + 1, end: inn + 1 });
+            }
+          }
+
+          const runStr = runs
+            .map(r => r.start === r.end ? `${r.pos}(${r.start})` : `${r.pos}(${r.start}-${r.end})`)
+            .join('/');
+
+          playerPatterns.push(`${p.firstName}→${runStr}`);
+        }
+
+        patternLines.push(
+          `Game ${game.gameNumber} vs ${game.opponent}: ${playerPatterns.join(', ')}`
+        );
+      }
+
+      if (patternLines.length > 0) {
+        lineupPatterns = `Recent lineup patterns (last ${patternLines.length} game${patternLines.length > 1 ? 's' : ''}, innings 1-5 only):\n${patternLines.join('\n')}`;
+      }
+    }
+
+    // Load logic updates from Firebase
+    let logicUpdateTexts: string[] = [];
+    try {
+      const logicUpdates = await loadLogicUpdates();
+      logicUpdateTexts = logicUpdates.map((u) => `[${u.author}]: ${u.text}`);
+    } catch {
+      // Silently continue without logic updates
+    }
+
     // Fetch AI adjustments (returns [] on any error — non-blocking)
-    const aiAdjustments = await fetchAIAdjustments(recentNotes, players);
+    const aiAdjustments = await fetchAIAdjustments(recentNotes, players, rosterNotes, lineupPatterns, logicUpdateTexts);
 
     const suggestion = suggestLineup(players, TOTAL_INNINGS, [], lastPitchers, aiAdjustments);
     setBattingOrder(suggestion.battingOrder);

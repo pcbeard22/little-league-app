@@ -46,6 +46,9 @@ export const players: Player[] = [
       hbp: 0,
       sb: 1,
       cs: 0,
+      qab: 38.46,
+      barisp: 0,
+      lob: 9,
     },
     fieldingStats: {
       tc: 1,
@@ -100,6 +103,9 @@ export const players: Player[] = [
       hbp: 0,
       sb: 0,
       cs: 0,
+      qab: 36.36,
+      barisp: 0,
+      lob: 4,
     },
     fieldingStats: {
       tc: 0,
@@ -154,6 +160,9 @@ export const players: Player[] = [
       hbp: 0,
       sb: 1,
       cs: 0,
+      qab: 53.33,
+      barisp: 0.143,
+      lob: 9,
     },
     fieldingStats: {
       tc: 6,
@@ -208,6 +217,9 @@ export const players: Player[] = [
       hbp: 0,
       sb: 4,
       cs: 0,
+      qab: 60.00,
+      barisp: 0.400,
+      lob: 5,
     },
     fieldingStats: {
       tc: 21,
@@ -262,6 +274,9 @@ export const players: Player[] = [
       hbp: 1,
       sb: 1,
       cs: 1,
+      qab: 38.46,
+      barisp: 0,
+      lob: 6,
     },
     fieldingStats: {
       tc: 7,
@@ -317,6 +332,9 @@ export const players: Player[] = [
       hbp: 1,
       sb: 0,
       cs: 1,
+      qab: 53.33,
+      barisp: 0.222,
+      lob: 12,
     },
     fieldingStats: {
       tc: 2,
@@ -371,6 +389,9 @@ export const players: Player[] = [
       hbp: 1,
       sb: 3,
       cs: 0,
+      qab: 84.21,
+      barisp: 0.778,
+      lob: 2,
     },
     pitchingStats: {
       ip: 7.2,
@@ -439,6 +460,9 @@ export const players: Player[] = [
       hbp: 2,
       sb: 6,
       cs: 0,
+      qab: 38.46,
+      barisp: 0,
+      lob: 5,
     },
     pitchingStats: {
       ip: 5,
@@ -507,6 +531,9 @@ export const players: Player[] = [
       hbp: 0,
       sb: 3,
       cs: 1,
+      qab: 76.47,
+      barisp: 0.625,
+      lob: 6,
     },
     pitchingStats: {
       ip: 7,
@@ -576,6 +603,9 @@ export const players: Player[] = [
       hbp: 1,
       sb: 2,
       cs: 0,
+      qab: 50.00,
+      barisp: 0.500,
+      lob: 7,
     },
     pitchingStats: {
       ip: 11.1,
@@ -644,6 +674,9 @@ export const players: Player[] = [
       hbp: 1,
       sb: 1,
       cs: 0,
+      qab: 64.29,
+      barisp: 0.167,
+      lob: 8,
     },
     fieldingStats: {
       tc: 13,
