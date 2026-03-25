@@ -51,12 +51,38 @@ const DEFAULT_DEPTH_CHARTS: DepthCharts = {
  * Seeds Firebase with initial data if the collections are empty.
  * This runs once on first load, then Firebase is the source of truth.
  */
+// Bump this version whenever player stats are updated from a new CSV.
+// If Firebase has an older version (or none), stats get re-synced.
+const STATS_VERSION = 2; // v2 = 6-game stats (Mar 25 2026)
+
 export async function seedFirebase(): Promise<void> {
   // Seed players if empty
   const existingPlayers = await loadPlayers();
   if (!existingPlayers) {
     console.log('[seed] No players in Firebase — seeding default roster...');
     await savePlayers(defaultPlayers);
+  } else {
+    // Check if stats need updating (version bump)
+    const versionKey = 'rockies_stats_version';
+    const currentVersion = Number(localStorage.getItem(versionKey) || '0');
+    if (currentVersion < STATS_VERSION) {
+      console.log(`[seed] Updating player stats to version ${STATS_VERSION}...`);
+      // Merge new stats onto existing players (preserve any name edits etc.)
+      const merged = existingPlayers.map((existing) => {
+        const updated = defaultPlayers.find((d) => d.number === existing.number);
+        if (updated) {
+          return {
+            ...existing,
+            stats: updated.stats,
+            pitchingStats: updated.pitchingStats,
+            fieldingStats: updated.fieldingStats,
+          };
+        }
+        return existing;
+      });
+      await savePlayers(merged);
+      localStorage.setItem(versionKey, String(STATS_VERSION));
+    }
   }
 
   // Seed depth charts if empty
