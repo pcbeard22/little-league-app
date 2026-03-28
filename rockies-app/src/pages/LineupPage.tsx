@@ -120,7 +120,7 @@ function SortablePlayerRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
+      className={`grid grid-cols-[auto_auto_1fr_repeat(6,28px)] sm:grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
         isDragging
           ? 'bg-rockies-purple/5 shadow-lg rounded-lg'
           : orderIdx % 2 === 0
@@ -138,7 +138,7 @@ function SortablePlayerRow({
       </div>
 
       {/* Up/Down arrows — mobile only */}
-      <div className="flex lg:hidden flex-col items-center justify-center w-8 h-full gap-0">
+      <div className="flex lg:hidden flex-col items-center justify-center w-6 h-full gap-0">
         {orderIdx > 0 ? (
           <button
             type="button"
@@ -179,7 +179,8 @@ function SortablePlayerRow({
           title={p.tier}
         />
         <span className={`text-sm font-medium truncate ${isAbsent ? 'line-through text-rockies-black/50' : 'text-rockies-black'}`}>
-          {p.firstName} {p.lastName}
+          <span className="sm:hidden">{p.firstName}</span>
+          <span className="hidden sm:inline">{p.firstName} {p.lastName}</span>
         </span>
         {!isAbsent && obp !== undefined && (
           <span className="hidden lg:inline-flex ml-auto shrink-0 tabular-nums items-center gap-0.5 bg-rockies-purple/8 rounded px-1.5 py-0.5">
@@ -187,16 +188,18 @@ function SortablePlayerRow({
             <span className="text-xs font-bold text-rockies-purple">{obp.toFixed(3).replace(/^0/, '')}</span>
           </span>
         )}
+        {/* OUT toggle — icon only on mobile, text on desktop */}
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleAbsent(playerIdx); }}
-          className={`ml-auto shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition-colors ${
+          className={`ml-auto shrink-0 rounded transition-colors ${
             isAbsent
-              ? 'bg-red-100 text-red-600 border border-red-300 hover:bg-red-200'
-              : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
+              ? 'w-5 h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-red-100 text-red-600 border border-red-300 hover:bg-red-200 flex items-center justify-center'
+              : 'w-5 h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 flex items-center justify-center'
           }`}
         >
-          {isAbsent ? 'Add Back' : 'Out'}
+          <span className="lg:hidden text-[9px] font-bold">{isAbsent ? '✓' : '✕'}</span>
+          <span className="hidden lg:inline text-[9px] font-bold uppercase">{isAbsent ? 'Add Back' : 'Out'}</span>
         </button>
       </div>
 
@@ -652,7 +655,7 @@ export default function LineupPage() {
           <div className="w-full lg:w-[55%]">
             <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest overflow-hidden">
               {/* Header row */}
-              <div className="grid grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
+              <div className="grid grid-cols-[auto_auto_1fr_repeat(6,28px)] sm:grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
                 <div className="w-8" />
                 <div className="px-1 py-2">
                   <span className="text-[10px] font-semibold text-rockies-black/40 uppercase">#</span>
