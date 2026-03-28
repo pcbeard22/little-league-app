@@ -120,7 +120,7 @@ function SortablePlayerRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[auto_auto_1fr_repeat(6,28px)] sm:grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
+      className={`grid grid-cols-[auto_auto_1fr_repeat(6,28px)_auto] sm:grid-cols-[auto_auto_1fr_repeat(6,36px)_auto] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)_auto] items-center gap-0 border-b border-surface-container-highest ${
         isDragging
           ? 'bg-rockies-purple/5 shadow-lg rounded-lg'
           : orderIdx % 2 === 0
@@ -188,19 +188,7 @@ function SortablePlayerRow({
             <span className="text-xs font-bold text-rockies-purple">{obp.toFixed(3).replace(/^0/, '')}</span>
           </span>
         )}
-        {/* OUT toggle — icon only on mobile, text on desktop */}
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onToggleAbsent(playerIdx); }}
-          className={`shrink-0 rounded flex items-center justify-center transition-colors ${
-            isAbsent
-              ? 'w-4 h-4 sm:w-5 sm:h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-red-100 text-red-600 border border-red-300 hover:bg-red-200'
-              : 'w-4 h-4 sm:w-5 sm:h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
-          }`}
-        >
-          <span className="lg:hidden text-[8px] font-bold">{isAbsent ? '✓' : '✕'}</span>
-          <span className="hidden lg:inline text-[9px] font-bold uppercase">{isAbsent ? 'Add Back' : 'Out'}</span>
-        </button>
+        {!isAbsent && obp === undefined && <span />}
       </div>
 
       {/* 6 inning position dropdowns */}
@@ -240,6 +228,23 @@ function SortablePlayerRow({
           </div>
         );
       })}
+
+      {/* OUT toggle — after inning cells */}
+      <div className="flex items-center justify-center px-0.5 py-1.5">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleAbsent(playerIdx); }}
+          className={`shrink-0 rounded flex items-center justify-center transition-colors ${
+            isAbsent
+              ? 'w-5 h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-green-100 text-green-600 border border-green-300 hover:bg-green-200'
+              : 'w-5 h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
+          }`}
+          title={isAbsent ? 'Add back' : 'Mark as out'}
+        >
+          <span className="lg:hidden text-[8px] font-bold">{isAbsent ? '✓' : '✕'}</span>
+          <span className="hidden lg:inline text-[9px] font-bold uppercase">{isAbsent ? 'Back' : 'Out'}</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -685,7 +690,7 @@ export default function LineupPage() {
           <div className="w-full lg:w-[55%]">
             <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest overflow-hidden">
               {/* Header row */}
-              <div className="grid grid-cols-[auto_auto_1fr_repeat(6,28px)] sm:grid-cols-[auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
+              <div className="grid grid-cols-[auto_auto_1fr_repeat(6,28px)_auto] sm:grid-cols-[auto_auto_1fr_repeat(6,36px)_auto] lg:grid-cols-[auto_auto_1fr_repeat(6,48px)_auto] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
                 <div className="w-8" />
                 <div className="px-1 py-2">
                   <span className="text-[10px] font-semibold text-rockies-black/40 uppercase">#</span>
@@ -706,6 +711,7 @@ export default function LineupPage() {
                     {ordinal(i + 1)}
                   </button>
                 ))}
+                <div className="w-5 lg:w-8" />
               </div>
 
               {/* Sortable player rows */}
