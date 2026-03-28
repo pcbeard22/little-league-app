@@ -212,8 +212,8 @@ function SortablePlayerRow({
         if (isOut) {
           return (
             <div key={inn} className="flex items-center justify-center px-0.5 py-1.5">
-              <span className="w-full text-[11px] font-semibold rounded-md border border-red-300 bg-red-100 text-red-400 px-0.5 py-1 text-center">
-                OUT
+              <span className="w-full text-[8px] sm:text-[10px] font-semibold rounded-md border border-red-300 bg-red-100 text-red-400 py-1 text-center overflow-hidden">
+                —
               </span>
             </div>
           );
