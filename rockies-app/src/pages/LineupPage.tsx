@@ -163,20 +163,13 @@ function SortablePlayerRow({
         )}
       </div>
 
-      {/* Order number / OUT toggle */}
+      {/* Order number */}
       <div className="flex items-center justify-center px-1">
-        <button
-          type="button"
-          onClick={() => onToggleAbsent(playerIdx)}
-          title={isAbsent ? 'Mark as available' : 'Mark as out'}
-          className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center transition-colors ${
-            isAbsent
-              ? 'bg-red-500 text-white'
-              : 'bg-rockies-purple text-white'
-          }`}
-        >
+        <span className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${
+          isAbsent ? 'bg-red-500 text-white' : 'bg-rockies-purple text-white'
+        }`}>
           {isAbsent ? '✕' : orderIdx + 1}
-        </button>
+        </span>
       </div>
 
       {/* Player name + tier + OBP */}
@@ -188,15 +181,23 @@ function SortablePlayerRow({
         <span className={`text-sm font-medium truncate ${isAbsent ? 'line-through text-rockies-black/50' : 'text-rockies-black'}`}>
           {p.firstName} {p.lastName}
         </span>
-        {isAbsent && (
-          <span className="text-[10px] font-bold text-red-500 uppercase shrink-0">OUT</span>
-        )}
         {!isAbsent && obp !== undefined && (
           <span className="hidden lg:inline-flex ml-auto shrink-0 tabular-nums items-center gap-0.5 bg-rockies-purple/8 rounded px-1.5 py-0.5">
             <span className="text-[10px] font-medium text-rockies-purple/50">OBP</span>
             <span className="text-xs font-bold text-rockies-purple">{obp.toFixed(3).replace(/^0/, '')}</span>
           </span>
         )}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleAbsent(playerIdx); }}
+          className={`ml-auto shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition-colors ${
+            isAbsent
+              ? 'bg-red-100 text-red-600 border border-red-300 hover:bg-red-200'
+              : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
+          }`}
+        >
+          {isAbsent ? 'Add Back' : 'Out'}
+        </button>
       </div>
 
       {/* 6 inning position dropdowns */}
@@ -563,6 +564,25 @@ export default function LineupPage() {
     setAiLoading(false);
   }, [players, currentGameIndex, gameNoteEntries]);
 
+  // Sort batting order for display: active players first, absent at bottom
+  const displayOrder = useMemo(() => {
+    const active: number[] = [];
+    const absent: number[] = [];
+    for (const idx of battingOrder) {
+      if (absentPlayers.has(players[idx].number)) {
+        absent.push(idx);
+      } else {
+        active.push(idx);
+      }
+    }
+    return [...active, ...absent];
+  }, [battingOrder, absentPlayers, players]);
+
+  const displaySortableIds = useMemo(
+    () => displayOrder.map((idx) => `player-${players[idx].number}`),
+    [displayOrder, players],
+  );
+
   // Derive field positions for current inning
   const fieldPositions = useMemo(() => {
     return battingOrder
@@ -662,26 +682,30 @@ export default function LineupPage() {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={sortableIds}
+                  items={displaySortableIds}
                   strategy={verticalListSortingStrategy}
                 >
-                  {battingOrder.map((playerIdx, orderIdx) => (
-                    <SortablePlayerRow
-                      key={sortableIds[orderIdx]}
-                      playerId={sortableIds[orderIdx]}
-                      playerIdx={playerIdx}
-                      orderIdx={orderIdx}
-                      positions={positionsByInning[playerIdx]}
-                      currentInning={currentInning}
-                      onPositionChange={handlePositionChange}
-                      players={players}
-                      totalRows={battingOrder.length}
-                      onMoveUp={handleMoveUp}
-                      onMoveDown={handleMoveDown}
-                      isAbsent={absentPlayers.has(players[playerIdx].number)}
-                      onToggleAbsent={handleToggleAbsent}
-                    />
-                  ))}
+                  {displayOrder.map((playerIdx, orderIdx) => {
+                    const isOut = absentPlayers.has(players[playerIdx].number);
+                    const activeCount = displayOrder.filter((i) => !absentPlayers.has(players[i].number)).length;
+                    return (
+                      <SortablePlayerRow
+                        key={`player-${players[playerIdx].number}`}
+                        playerId={`player-${players[playerIdx].number}`}
+                        playerIdx={playerIdx}
+                        orderIdx={orderIdx}
+                        positions={positionsByInning[playerIdx]}
+                        currentInning={currentInning}
+                        onPositionChange={handlePositionChange}
+                        players={players}
+                        totalRows={activeCount}
+                        onMoveUp={handleMoveUp}
+                        onMoveDown={handleMoveDown}
+                        isAbsent={isOut}
+                        onToggleAbsent={handleToggleAbsent}
+                      />
+                    );
+                  })}
                 </SortableContext>
               </DndContext>
             </div>
