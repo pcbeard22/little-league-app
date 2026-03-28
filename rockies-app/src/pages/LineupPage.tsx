@@ -79,6 +79,8 @@ interface SortableRowProps {
   totalRows: number;
   onMoveUp: (orderIdx: number) => void;
   onMoveDown: (orderIdx: number) => void;
+  isAbsent: boolean;
+  onToggleAbsent: (playerIdx: number) => void;
 }
 
 function SortablePlayerRow({
@@ -92,6 +94,8 @@ function SortablePlayerRow({
   totalRows,
   onMoveUp,
   onMoveDown,
+  isAbsent,
+  onToggleAbsent,
 }: SortableRowProps) {
   const {
     attributes,
@@ -159,23 +163,35 @@ function SortablePlayerRow({
         )}
       </div>
 
-      {/* Order number */}
+      {/* Order number / OUT toggle */}
       <div className="flex items-center justify-center px-1">
-        <span className="w-6 h-6 rounded-full bg-rockies-purple text-white text-[11px] font-bold flex items-center justify-center">
-          {orderIdx + 1}
-        </span>
+        <button
+          type="button"
+          onClick={() => onToggleAbsent(playerIdx)}
+          title={isAbsent ? 'Mark as available' : 'Mark as out'}
+          className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center transition-colors ${
+            isAbsent
+              ? 'bg-red-500 text-white'
+              : 'bg-rockies-purple text-white'
+          }`}
+        >
+          {isAbsent ? '✕' : orderIdx + 1}
+        </button>
       </div>
 
       {/* Player name + tier + OBP */}
-      <div className="flex items-center gap-1.5 px-2 py-2 min-w-0">
+      <div className={`flex items-center gap-1.5 px-2 py-2 min-w-0 ${isAbsent ? 'opacity-40' : ''}`}>
         <span
           className={`w-2 h-2 rounded-full shrink-0 ${TIER_DOT[p.tier]}`}
           title={p.tier}
         />
-        <span className="text-sm font-medium text-rockies-black truncate">
+        <span className={`text-sm font-medium truncate ${isAbsent ? 'line-through text-rockies-black/50' : 'text-rockies-black'}`}>
           {p.firstName} {p.lastName}
         </span>
-        {obp !== undefined && (
+        {isAbsent && (
+          <span className="text-[10px] font-bold text-red-500 uppercase shrink-0">OUT</span>
+        )}
+        {!isAbsent && obp !== undefined && (
           <span className="hidden lg:inline-flex ml-auto shrink-0 tabular-nums items-center gap-0.5 bg-rockies-purple/8 rounded px-1.5 py-0.5">
             <span className="text-[10px] font-medium text-rockies-purple/50">OBP</span>
             <span className="text-xs font-bold text-rockies-purple">{obp.toFixed(3).replace(/^0/, '')}</span>
@@ -185,9 +201,19 @@ function SortablePlayerRow({
 
       {/* 6 inning position dropdowns */}
       {Array.from({ length: TOTAL_INNINGS }, (_, inn) => {
-        const pos = positions[inn] ?? 'BN';
+        const pos = isAbsent ? 'OUT' : (positions[inn] ?? 'BN');
         const isActive = inn + 1 === currentInning;
         const isBench = pos === 'BN';
+        const isOut = pos === 'OUT';
+        if (isOut) {
+          return (
+            <div key={inn} className="flex items-center justify-center px-0.5 py-1.5">
+              <span className="w-full text-[11px] font-semibold rounded-md border border-red-300 bg-red-100 text-red-400 px-0.5 py-1 text-center">
+                OUT
+              </span>
+            </div>
+          );
+        }
         return (
           <div key={inn} className="flex items-center justify-center px-0.5 py-1.5">
             <select
@@ -228,6 +254,7 @@ export default function LineupPage() {
   const [newNoteText, setNewNoteText] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [absentPlayers, setAbsentPlayers] = useState<Set<number>>(new Set());
   const [fieldOpen, setFieldOpen] = useState(false);
   const [notesUnlocked, setNotesUnlocked] = useState(() => localStorage.getItem('rockies_coach_mode') === 'true');
   const [showPinPrompt, setShowPinPrompt] = useState(false);
@@ -268,12 +295,14 @@ export default function LineupPage() {
         if (saved) {
           setBattingOrder(saved.battingOrder);
           setPositionsByInning(saved.positionsByInning);
+          setAbsentPlayers(new Set(saved.absentPlayers ?? []));
           const entries = deserializeNotes(saved.gameNotes ?? '');
           setGameNoteEntries(entries);
           if (entries.length > 0) setNotesOpen(true);
         } else {
           setBattingOrder(makeDefaultBattingOrder());
           setPositionsByInning(makeDefaultPositions());
+          setAbsentPlayers(new Set());
           setGameNoteEntries([]);
         }
         setLoadedGameId(game.id);
@@ -327,7 +356,7 @@ export default function LineupPage() {
         gameDate: game.date,
         battingOrder,
         positionsByInning,
-        absentPlayers: [],
+        absentPlayers: Array.from(absentPlayers),
         gameNotes: serializeNotes(gameNoteEntries),
       });
       setSaveStatus('saved');
@@ -379,6 +408,20 @@ export default function LineupPage() {
   );
 
   // Move player up/down in batting order (mobile arrows)
+  // Toggle absent
+  const handleToggleAbsent = useCallback((playerIdx: number) => {
+    const playerNum = players[playerIdx].number;
+    setAbsentPlayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(playerNum)) {
+        next.delete(playerNum);
+      } else {
+        next.add(playerNum);
+      }
+      return next;
+    });
+  }, [players]);
+
   const handleMoveUp = useCallback((orderIdx: number) => {
     if (orderIdx <= 0) return;
     setBattingOrder((prev) => {
@@ -514,7 +557,7 @@ export default function LineupPage() {
     // Fetch AI adjustments (returns [] on any error — non-blocking)
     const aiAdjustments = await fetchAIAdjustments(recentNotes, players, rosterNotes, lineupPatterns, logicUpdateTexts);
 
-    const suggestion = suggestLineup(players, TOTAL_INNINGS, [], lastPitchers, aiAdjustments);
+    const suggestion = suggestLineup(players, TOTAL_INNINGS, Array.from(absentPlayers), lastPitchers, aiAdjustments);
     setBattingOrder(suggestion.battingOrder);
     setPositionsByInning(suggestion.positionsByInning);
     setAiLoading(false);
@@ -524,16 +567,17 @@ export default function LineupPage() {
   const fieldPositions = useMemo(() => {
     return battingOrder
       .map((playerIdx) => {
-        const pos = positionsByInning[playerIdx]?.[currentInning - 1] ?? 'BN';
         const p = players[playerIdx];
+        if (absentPlayers.has(p.number)) return null;
+        const pos = positionsByInning[playerIdx]?.[currentInning - 1] ?? 'BN';
         return {
           position: pos,
           playerName: `${p.firstName} ${p.lastName}`,
           playerId: p.number,
         };
       })
-      .filter((p) => p.position !== 'BN');
-  }, [battingOrder, positionsByInning, currentInning]);
+      .filter((p): p is NonNullable<typeof p> => p !== null && p.position !== 'BN');
+  }, [battingOrder, positionsByInning, currentInning, absentPlayers]);
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-64px)] pb-24 lg:pb-6">
@@ -634,6 +678,8 @@ export default function LineupPage() {
                       totalRows={battingOrder.length}
                       onMoveUp={handleMoveUp}
                       onMoveDown={handleMoveDown}
+                      isAbsent={absentPlayers.has(players[playerIdx].number)}
+                      onToggleAbsent={handleToggleAbsent}
                     />
                   ))}
                 </SortableContext>
