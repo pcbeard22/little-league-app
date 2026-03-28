@@ -192,13 +192,13 @@ function SortablePlayerRow({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleAbsent(playerIdx); }}
-          className={`ml-auto shrink-0 rounded transition-colors ${
+          className={`shrink-0 rounded flex items-center justify-center transition-colors ${
             isAbsent
-              ? 'w-5 h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-red-100 text-red-600 border border-red-300 hover:bg-red-200 flex items-center justify-center'
-              : 'w-5 h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 flex items-center justify-center'
+              ? 'w-4 h-4 sm:w-5 sm:h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-red-100 text-red-600 border border-red-300 hover:bg-red-200'
+              : 'w-4 h-4 sm:w-5 sm:h-5 lg:w-auto lg:h-auto lg:px-1.5 lg:py-0.5 bg-gray-100 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
           }`}
         >
-          <span className="lg:hidden text-[9px] font-bold">{isAbsent ? '✓' : '✕'}</span>
+          <span className="lg:hidden text-[8px] font-bold">{isAbsent ? '✓' : '✕'}</span>
           <span className="hidden lg:inline text-[9px] font-bold uppercase">{isAbsent ? 'Add Back' : 'Out'}</span>
         </button>
       </div>

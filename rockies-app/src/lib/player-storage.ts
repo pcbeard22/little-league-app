@@ -84,10 +84,11 @@ export async function savePlayers(players: Player[]): Promise<void> {
 
   for (const player of players) {
     const ref = playerDoc(player.number);
-    batch.set(ref, {
+    const data = stripUndefined({
       ...player,
       updatedAt: Timestamp.now(),
-    });
+    } as unknown as Record<string, unknown>);
+    batch.set(ref, data);
   }
 
   await batch.commit();
@@ -114,15 +115,30 @@ export async function loadPlayers(): Promise<Player[] | null> {
   return players;
 }
 
+/** Strip undefined values recursively so Firestore doesn't choke */
+function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (val === undefined) continue;
+    if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Timestamp)) {
+      clean[key] = stripUndefined(val as Record<string, unknown>);
+    } else {
+      clean[key] = val;
+    }
+  }
+  return clean;
+}
+
 /** Save a single player update */
 export async function savePlayer(player: Player): Promise<void> {
   await ensureAuth();
 
   const ref = playerDoc(player.number);
-  await setDoc(ref, {
+  const data = stripUndefined({
     ...player,
     updatedAt: Timestamp.now(),
-  }, { merge: true });
+  } as unknown as Record<string, unknown>);
+  await setDoc(ref, data, { merge: true });
 }
 
 // ---------------------------------------------------------------------------
