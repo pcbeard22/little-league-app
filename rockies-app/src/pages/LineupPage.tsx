@@ -561,9 +561,39 @@ export default function LineupPage() {
     // Fetch AI adjustments (returns [] on any error — non-blocking)
     const aiAdjustments = await fetchAIAdjustments(recentNotes, players, rosterNotes, lineupPatterns, logicUpdateTexts);
 
-    const suggestion = suggestLineup(players, TOTAL_INNINGS, Array.from(absentPlayers), lastPitchers, aiAdjustments);
-    setBattingOrder(suggestion.battingOrder);
-    setPositionsByInning(suggestion.positionsByInning);
+    const absentArr = Array.from(absentPlayers);
+    const suggestion = suggestLineup(players, TOTAL_INNINGS, absentArr, lastPitchers, aiAdjustments);
+
+    // The engine filters out absent players and returns indices into the filtered array.
+    // We need to map those back to indices in the full `players` array.
+    const absentSet = new Set(absentArr);
+    const filteredToFull: number[] = [];
+    for (let i = 0; i < players.length; i++) {
+      if (!absentSet.has(players[i].number)) {
+        filteredToFull.push(i);
+      }
+    }
+
+    // Map batting order: filtered indices → full indices
+    const mappedBattingOrder = suggestion.battingOrder.map((fi) => filteredToFull[fi]);
+    // Add absent players at the end
+    const absentIndices = players
+      .map((p, i) => (absentSet.has(p.number) ? i : -1))
+      .filter((i) => i !== -1);
+    const fullBattingOrder = [...mappedBattingOrder, ...absentIndices];
+
+    // Map positions: create full-size array, fill absent with 'OUT' for all innings
+    const fullPositions: string[][] = players.map(() => Array(TOTAL_INNINGS).fill('BN'));
+    for (let fi = 0; fi < suggestion.positionsByInning.length; fi++) {
+      const fullIdx = filteredToFull[fi];
+      fullPositions[fullIdx] = suggestion.positionsByInning[fi];
+    }
+    for (const ai of absentIndices) {
+      fullPositions[ai] = Array(TOTAL_INNINGS).fill('OUT');
+    }
+
+    setBattingOrder(fullBattingOrder);
+    setPositionsByInning(fullPositions);
     setAiLoading(false);
   }, [players, currentGameIndex, gameNoteEntries]);
 
