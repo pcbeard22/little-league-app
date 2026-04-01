@@ -639,7 +639,7 @@ export default function LineupPage() {
   }, [battingOrder, positionsByInning, currentInning, absentPlayers]);
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-64px)] pb-24 lg:pb-6">
+    <div className="flex flex-col min-h-[calc(100dvh-64px)] pb-32 lg:pb-6">
       {/* Game selector */}
       <GameSelector
         games={MOCK_GAMES}
@@ -918,7 +918,7 @@ export default function LineupPage() {
       </div>
 
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 inset-x-0 lg:relative lg:bottom-auto bg-white/80 backdrop-blur-lg border-t border-surface-container-highest lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-30">
+      <div className="fixed bottom-0 inset-x-0 lg:relative lg:bottom-auto bg-white/80 backdrop-blur-lg border-t border-surface-container-highest lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-3">
           <button
             onClick={handleAutoSuggest}
