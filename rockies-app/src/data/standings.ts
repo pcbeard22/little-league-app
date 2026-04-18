@@ -13,22 +13,23 @@ export interface TeamStanding {
   away: string;
 }
 
-// Updated 2026-04-04 from Game Changer screenshot
+// Updated 2026-04-11 from Game Changer screenshot
 export const STANDINGS: TeamStanding[] = [
-  { team: 'Dodgers',    wins: 6, losses: 1, ties: 1, pct: .813, gb: '-',   runsFor: 63, runsAgainst: 31, diff: 32,  streak: 'W4', home: '3-0-1', away: '3-1' },
-  { team: 'Giants',     wins: 6, losses: 2, ties: 0, pct: .750, gb: '0.5', runsFor: 63, runsAgainst: 34, diff: 29,  streak: 'W1', home: '3-1',   away: '3-1' },
-  { team: 'White Sox',  wins: 5, losses: 2, ties: 1, pct: .688, gb: '1.0', runsFor: 40, runsAgainst: 37, diff: 3,   streak: 'L2', home: '3-1',   away: '2-1-1' },
-  { team: "A's",        wins: 5, losses: 2, ties: 1, pct: .688, gb: '1.0', runsFor: 58, runsAgainst: 57, diff: 1,   streak: 'T1', home: '1-2-1', away: '4-0' },
-  { team: 'Braves',     wins: 3, losses: 3, ties: 2, pct: .500, gb: '2.5', runsFor: 55, runsAgainst: 40, diff: 15,  streak: 'L1', home: '1-2-1', away: '2-1-1' },
-  { team: 'Cubs',       wins: 3, losses: 3, ties: 2, pct: .500, gb: '2.5', runsFor: 48, runsAgainst: 45, diff: 3,   streak: 'L1', home: '2-2',   away: '1-1-2' },
-  { team: 'Cardinals',  wins: 3, losses: 3, ties: 2, pct: .500, gb: '2.5', runsFor: 42, runsAgainst: 42, diff: 0,   streak: 'W2', home: '1-2-1', away: '2-1-1' },
-  { team: 'Pirates',    wins: 4, losses: 4, ties: 0, pct: .500, gb: '2.5', runsFor: 47, runsAgainst: 59, diff: -12, streak: 'L1', home: '2-3',   away: '2-1' },
-  { team: 'Rockies',    wins: 3, losses: 4, ties: 1, pct: .438, gb: '3.0', runsFor: 53, runsAgainst: 64, diff: -11, streak: 'W1', home: '1-3-1', away: '2-1' },
-  { team: 'Tigers',     wins: 3, losses: 5, ties: 0, pct: .375, gb: '3.5', runsFor: 61, runsAgainst: 58, diff: 3,   streak: 'W1', home: '2-1',   away: '1-4' },
-  { team: 'Orioles',    wins: 2, losses: 4, ties: 2, pct: .375, gb: '3.5', runsFor: 40, runsAgainst: 48, diff: -8,  streak: 'T1', home: '0-2-1', away: '2-2-1' },
-  { team: 'Astros',     wins: 3, losses: 5, ties: 0, pct: .375, gb: '3.5', runsFor: 30, runsAgainst: 40, diff: -10, streak: 'W1', home: '1-3',   away: '2-2' },
-  { team: 'Reds',       wins: 2, losses: 6, ties: 0, pct: .250, gb: '4.5', runsFor: 36, runsAgainst: 51, diff: -15, streak: 'L1', home: '1-3',   away: '1-3' },
-  { team: 'Red Sox',    wins: 2, losses: 6, ties: 0, pct: .250, gb: '4.5', runsFor: 48, runsAgainst: 76, diff: -28, streak: 'L2', home: '1-3',   away: '1-3' },
+  { team: 'Dodgers',         wins: 8, losses: 2, ties: 1, pct: .773, gb: '-',   runsFor: 82, runsAgainst: 48, diff: 34,  streak: 'W2', home: '4-0-1', away: '4-2' },
+  { team: "A's",             wins: 8, losses: 2, ties: 1, pct: .773, gb: '-',   runsFor: 86, runsAgainst: 66, diff: 20,  streak: 'W3', home: '2-2-1', away: '6-0' },
+  { team: 'Giants',          wins: 7, losses: 3, ties: 0, pct: .700, gb: '1.0', runsFor: 80, runsAgainst: 49, diff: 31,  streak: 'L1', home: '4-1',   away: '3-2' },
+  { team: 'White Sox',       wins: 6, losses: 3, ties: 1, pct: .650, gb: '1.5', runsFor: 42, runsAgainst: 44, diff: -2,  streak: 'W1', home: '4-1',   away: '2-2-1' },
+  { team: 'Braves',          wins: 5, losses: 3, ties: 2, pct: .600, gb: '2.0', runsFor: 72, runsAgainst: 50, diff: 22,  streak: 'W2', home: '2-2-1', away: '3-1-1' },
+  { team: 'Rockies',         wins: 5, losses: 4, ties: 1, pct: .550, gb: '2.5', runsFor: 70, runsAgainst: 79, diff: -9,  streak: 'W3', home: '2-3-1', away: '3-1' },
+  { team: 'Harley-WhiteSox', wins: 5, losses: 4, ties: 1, pct: .550, gb: '2.5', runsFor: 82, runsAgainst: 93, diff: -11, streak: 'W4', home: '2-3-1', away: '3-1' },
+  { team: 'Cardinals',       wins: 4, losses: 4, ties: 2, pct: .500, gb: '3.0', runsFor: 54, runsAgainst: 53, diff: 1,   streak: 'L1', home: '1-3-1', away: '3-1-1' },
+  { team: 'Cubs',            wins: 4, losses: 5, ties: 2, pct: .455, gb: '3.5', runsFor: 67, runsAgainst: 61, diff: 6,   streak: 'L1', home: '3-3',   away: '1-2-2' },
+  { team: 'Orioles',         wins: 3, losses: 5, ties: 2, pct: .400, gb: '4.0', runsFor: 50, runsAgainst: 55, diff: -5,  streak: 'L1', home: '1-2-1', away: '2-3-1' },
+  { team: 'Pirates',         wins: 4, losses: 6, ties: 0, pct: .400, gb: '4.0', runsFor: 61, runsAgainst: 79, diff: -18, streak: 'L3', home: '2-4',   away: '2-2' },
+  { team: 'Astros',          wins: 4, losses: 7, ties: 0, pct: .364, gb: '4.5', runsFor: 47, runsAgainst: 61, diff: -14, streak: 'L1', home: '1-5',   away: '3-2' },
+  { team: 'Tigers',          wins: 3, losses: 7, ties: 0, pct: .300, gb: '5.0', runsFor: 72, runsAgainst: 77, diff: -5,  streak: 'L2', home: '2-2',   away: '1-5' },
+  { team: 'Reds',            wins: 3, losses: 7, ties: 0, pct: .300, gb: '5.0', runsFor: 46, runsAgainst: 67, diff: -21, streak: 'L1', home: '2-3',   away: '1-4' },
+  { team: 'Red Sox',         wins: 2, losses: 8, ties: 0, pct: .200, gb: '6.0', runsFor: 61, runsAgainst: 99, diff: -38, streak: 'L4', home: '1-4',   away: '1-4' },
 ];
 
 // Helper: get sorted standings (by pct descending, then diff descending)
