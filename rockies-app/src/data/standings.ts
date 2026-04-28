@@ -20,7 +20,6 @@ export const STANDINGS: TeamStanding[] = [
   { team: 'Giants',          wins: 10, losses: 3, ties: 0, pct: .769, gb: '0.5', runsFor: 102, runsAgainst: 61,  diff: 41,  streak: 'W3', home: '5-1',   away: '5-2' },
   { team: 'White Sox',       wins: 8,  losses: 4, ties: 1, pct: .654, gb: '2.0', runsFor: 64,  runsAgainst: 54,  diff: 10,  streak: 'W1', home: '5-1',   away: '3-3-1' },
   { team: 'Braves',          wins: 7,  losses: 4, ties: 2, pct: .615, gb: '2.5', runsFor: 97,  runsAgainst: 68,  diff: 29,  streak: 'W2', home: '3-2-1', away: '4-2-1' },
-  { team: 'Harley-WhiteSox', wins: 7,  losses: 4, ties: 1, pct: .625, gb: '2.5', runsFor: 107, runsAgainst: 105, diff: 2,   streak: 'W6', home: '2-3-1', away: '5-1' },
   { team: 'Cubs',            wins: 5,  losses: 6, ties: 2, pct: .462, gb: '4.5', runsFor: 74,  runsAgainst: 69,  diff: 5,   streak: 'W1', home: '3-4',   away: '2-2-2' },
   { team: 'Orioles',         wins: 5,  losses: 6, ties: 2, pct: .462, gb: '4.5', runsFor: 78,  runsAgainst: 81,  diff: -3,  streak: 'W2', home: '2-3-1', away: '3-3-1' },
   { team: 'Rockies',         wins: 5,  losses: 7, ties: 1, pct: .423, gb: '5.0', runsFor: 82,  runsAgainst: 108, diff: -26, streak: 'L3', home: '2-4-1', away: '3-3' },

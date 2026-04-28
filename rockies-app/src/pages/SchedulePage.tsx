@@ -1,6 +1,9 @@
-import { useEffect } from 'react';
-import { Calendar, Trophy } from 'lucide-react';
-import { getSortedStandings, getTeamRecord, formatRecord } from '@/data/standings';
+import { useEffect, useMemo, useState } from 'react';
+import { Calendar, Trophy, ArrowUp, ArrowDown } from 'lucide-react';
+import { getSortedStandings, getTeamRecord, formatRecord, type TeamStanding } from '@/data/standings';
+
+type SortKey = 'rank' | 'team' | 'wins' | 'losses' | 'ties' | 'pct' | 'gb' | 'runsFor' | 'runsAgainst' | 'diff' | 'streak';
+type SortDir = 'asc' | 'desc';
 
 export default function SchedulePage() {
   // Load Game Changer widget
@@ -20,7 +23,58 @@ export default function SchedulePage() {
     };
   }, []);
 
-  const sortedStandings = getSortedStandings();
+  const [sortKey, setSortKey] = useState<SortKey>('rank');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const baseSorted = useMemo(() => getSortedStandings(), []);
+
+  const sortedStandings = useMemo(() => {
+    if (sortKey === 'rank') {
+      return sortDir === 'asc' ? baseSorted : [...baseSorted].reverse();
+    }
+    const arr = [...baseSorted];
+    arr.sort((a, b) => {
+      let av: number | string;
+      let bv: number | string;
+      if (sortKey === 'gb') {
+        av = a.gb === '-' ? 0 : parseFloat(a.gb);
+        bv = b.gb === '-' ? 0 : parseFloat(b.gb);
+      } else if (sortKey === 'streak') {
+        const score = (s: string) => {
+          const sign = s.startsWith('W') ? 1 : s.startsWith('L') ? -1 : 0;
+          const n = parseInt(s.slice(1), 10) || 0;
+          return sign * n;
+        };
+        av = score(a.streak);
+        bv = score(b.streak);
+      } else {
+        av = (a as TeamStanding)[sortKey] as number | string;
+        bv = (b as TeamStanding)[sortKey] as number | string;
+      }
+      if (typeof av === 'string' && typeof bv === 'string') {
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+    return arr;
+  }, [baseSorted, sortKey, sortDir]);
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      // Sensible default direction: text ascending, numbers descending (except L/RA where lower is better)
+      const ascDefault = key === 'team' || key === 'rank' || key === 'losses' || key === 'runsAgainst' || key === 'gb';
+      setSortDir(ascDefault ? 'asc' : 'desc');
+    }
+  };
+
+  const SortIcon = ({ k }: { k: SortKey }) => {
+    if (sortKey !== k) return null;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 inline-block ml-0.5" /> : <ArrowDown className="w-3 h-3 inline-block ml-0.5" />;
+  };
+
   const rockies = getTeamRecord('Rockies');
   const record = rockies ? formatRecord(rockies) : '0-0';
   const gamesPlayed = rockies ? rockies.wins + rockies.losses + rockies.ties : 0;
@@ -62,17 +116,17 @@ export default function SchedulePage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-rockies-silver/20 bg-gray-50/80">
-                    <th className="text-left px-2 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider w-8">#</th>
-                    <th className="text-left px-2 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">Team</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">W</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">L</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">T</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">PCT</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">GB</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">RS</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">RA</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">DIFF</th>
-                    <th className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider">STRK</th>
+                    <th onClick={() => handleSort('rank')} className="text-left px-2 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider w-8 cursor-pointer select-none hover:bg-gray-100">#<SortIcon k="rank" /></th>
+                    <th onClick={() => handleSort('team')} className="text-left px-2 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">Team<SortIcon k="team" /></th>
+                    <th onClick={() => handleSort('wins')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">W<SortIcon k="wins" /></th>
+                    <th onClick={() => handleSort('losses')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">L<SortIcon k="losses" /></th>
+                    <th onClick={() => handleSort('ties')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">T<SortIcon k="ties" /></th>
+                    <th onClick={() => handleSort('pct')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">PCT<SortIcon k="pct" /></th>
+                    <th onClick={() => handleSort('gb')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">GB<SortIcon k="gb" /></th>
+                    <th onClick={() => handleSort('runsFor')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">RS<SortIcon k="runsFor" /></th>
+                    <th onClick={() => handleSort('runsAgainst')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">RA<SortIcon k="runsAgainst" /></th>
+                    <th onClick={() => handleSort('diff')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">DIFF<SortIcon k="diff" /></th>
+                    <th onClick={() => handleSort('streak')} className="text-center px-1.5 py-2 font-semibold text-rockies-black/60 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100">STRK<SortIcon k="streak" /></th>
                   </tr>
                 </thead>
                 <tbody>
