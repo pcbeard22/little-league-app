@@ -191,6 +191,21 @@ const NEEDS_IMPROVEMENT_CATEGORIES: NeedsImprovementCategory[] = [
   { label: 'SO', getValue: (p) => p.stats?.so ?? 0, format: fmtInt, highestIsWorst: true },
 ];
 
+// Minimum total chances to qualify for FPCT leader/dev rankings
+const MIN_FIELDING_TC = 5;
+
+const FIELDING_LEADER_CATEGORIES: LeaderCategory[] = [
+  { label: 'FPCT', getValue: (p) => p.fieldingStats?.fpct ?? 0, format: (v) => fmt(v) },
+  { label: 'Putouts', getValue: (p) => p.fieldingStats?.putouts ?? 0, format: fmtInt },
+  { label: 'Assists', getValue: (p) => p.fieldingStats?.assists ?? 0, format: fmtInt },
+  { label: 'Chances', getValue: (p) => p.fieldingStats?.tc ?? 0, format: fmtInt },
+];
+
+const FIELDING_NEEDS_IMPROVEMENT_CATEGORIES: NeedsImprovementCategory[] = [
+  { label: 'Errors', getValue: (p) => p.fieldingStats?.errors ?? 0, format: fmtInt, highestIsWorst: true },
+  { label: 'FPCT', getValue: (p) => p.fieldingStats?.fpct ?? 0, format: (v) => fmt(v), highestIsWorst: false },
+];
+
 function getBottomPerformers(cat: NeedsImprovementCategory, battingPlayers: Player[]) {
   return [...battingPlayers]
     .sort((a, b) =>
@@ -216,6 +231,8 @@ interface ExpandedCategoryInfo {
    * 'asc' = lowest first (#1 = lowest value)
    */
   sortDirection: 'asc' | 'desc';
+  /** Which player pool to rank from (defaults to batting) */
+  pool?: 'batting' | 'fielding' | 'qualifiedFielders';
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +242,11 @@ export default function StatsPage() {
   const { players } = usePlayers();
   const battingPlayers = useMemo(() => players.filter((p) => p.stats), [players]);
   const pitchingPlayers = useMemo(() => players.filter((p) => p.pitchingStats), [players]);
+  const fieldingPlayers = useMemo(() => players.filter((p) => p.fieldingStats), [players]);
+  const qualifiedFielders = useMemo(
+    () => fieldingPlayers.filter((p) => (p.fieldingStats?.tc ?? 0) >= MIN_FIELDING_TC),
+    [fieldingPlayers],
+  );
   const teamStats = useMemo(() => computeTeamStats(battingPlayers), [battingPlayers]);
   const [battingSortKey, setBattingSortKey] = useState<BattingKey>('ops');
   const [battingSortDir, setBattingSortDir] = useState<'asc' | 'desc'>('desc');
@@ -235,13 +257,17 @@ export default function StatsPage() {
   // Full ranked list for the expanded modal
   const rankedPlayers = useMemo(() => {
     if (!expandedCategory) return [];
-    const { getValue, sortDirection } = expandedCategory;
-    return [...battingPlayers].sort((a, b) =>
+    const { getValue, sortDirection, pool = 'batting' } = expandedCategory;
+    const source =
+      pool === 'fielding' ? fieldingPlayers
+      : pool === 'qualifiedFielders' ? qualifiedFielders
+      : battingPlayers;
+    return [...source].sort((a, b) =>
       sortDirection === 'desc'
         ? getValue(b) - getValue(a)
         : getValue(a) - getValue(b),
     );
-  }, [expandedCategory, battingPlayers]);
+  }, [expandedCategory, battingPlayers, fieldingPlayers, qualifiedFielders]);
 
   // Sort batting players
   const sortedBatting = useMemo(() => {
@@ -431,6 +457,109 @@ export default function StatsPage() {
                   // For highestIsWorst (SO): worst = highest, so descending
                   // For !highestIsWorst (QAB, BA/RISP, OBP): worst = lowest, so ascending
                   sortDirection: cat.highestIsWorst ? 'desc' : 'asc',
+                })}
+                className="bg-amber-50 rounded-xl border border-amber-200/60 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+              >
+                <div className="bg-amber-400/80 px-4 py-1.5">
+                  <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">
+                    {cat.label}
+                  </p>
+                </div>
+                <div className="p-3 space-y-2">
+                  {bottom.map((p, i) => (
+                    <div key={p.number} className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-amber-200 text-amber-800">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-rockies-black truncate flex-1">
+                        {p.firstName} {p.lastName.charAt(0)}.
+                      </span>
+                      <span className="text-sm font-bold text-amber-700">
+                        {cat.format(cat.getValue(p))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Fielding Leaders */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Trophy className="w-4 h-4 text-rockies-purple" />
+          <h2 className="font-heading font-bold text-lg text-rockies-black">
+            Fielding Leaders
+          </h2>
+          <span className="text-[10px] text-rockies-black/40 uppercase tracking-wide ml-1">
+            FPCT min {MIN_FIELDING_TC} chances
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {FIELDING_LEADER_CATEGORIES.map((cat) => {
+            const pool = cat.label === 'FPCT' ? qualifiedFielders : fieldingPlayers;
+            const leaders = getLeaders(cat, pool);
+            return (
+              <div
+                key={cat.label}
+                onClick={() => setExpandedCategory({
+                  label: `Fielding ${cat.label}`,
+                  getValue: cat.getValue,
+                  format: cat.format,
+                  theme: 'leader',
+                  sortDirection: cat.lowerIsBetter ? 'asc' : 'desc',
+                  pool: cat.label === 'FPCT' ? 'qualifiedFielders' : 'fielding',
+                })}
+                className="bg-gray-50 rounded-xl border border-gray-200/60 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+              >
+                <div className="bg-gray-200/80 px-4 py-1.5">
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                    {cat.label}
+                  </p>
+                </div>
+                <div className="p-3 space-y-2">
+                  {leaders.map((p, i) => (
+                    <div key={p.number} className="flex items-center gap-2">
+                      {rankBadge(i)}
+                      <span className="text-sm text-rockies-black truncate flex-1">
+                        {p.firstName} {p.lastName.charAt(0)}.
+                      </span>
+                      <span className="text-sm font-bold text-rockies-purple">
+                        {cat.format(cat.getValue(p))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Defensive Development Focus */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <h2 className="font-heading font-bold text-lg text-rockies-black">
+            Defensive Development
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {FIELDING_NEEDS_IMPROVEMENT_CATEGORIES.map((cat) => {
+            const pool = cat.label === 'FPCT' ? qualifiedFielders : fieldingPlayers;
+            const bottom = getBottomPerformers(cat, pool);
+            return (
+              <div
+                key={cat.label}
+                onClick={() => setExpandedCategory({
+                  label: `Fielding ${cat.label}`,
+                  getValue: cat.getValue,
+                  format: cat.format,
+                  theme: 'development',
+                  sortDirection: cat.highestIsWorst ? 'desc' : 'asc',
+                  pool: cat.label === 'FPCT' ? 'qualifiedFielders' : 'fielding',
                 })}
                 className="bg-amber-50 rounded-xl border border-amber-200/60 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
               >
