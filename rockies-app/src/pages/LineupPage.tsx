@@ -305,7 +305,7 @@ export default function LineupPage() {
         if (saved) {
           setBattingOrder(saved.battingOrder);
           setPositionsByInning(saved.positionsByInning);
-          setAbsentPlayers(new Set(saved.absentPlayers ?? []));
+          setAbsentPlayers(new Set());
           const entries = deserializeNotes(saved.gameNotes ?? '');
           setGameNoteEntries(entries);
           if (entries.length > 0) setNotesOpen(true);
