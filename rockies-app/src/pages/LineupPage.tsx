@@ -120,7 +120,7 @@ function SortablePlayerRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[auto_auto_auto_1fr_repeat(6,28px)] sm:grid-cols-[auto_auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
+      className={`grid grid-cols-[auto_auto_auto_1fr_repeat(6,36px)] sm:grid-cols-[auto_auto_auto_1fr_repeat(6,40px)] lg:grid-cols-[auto_auto_auto_1fr_repeat(6,48px)] items-center gap-0 border-b border-surface-container-highest ${
         isDragging
           ? 'bg-rockies-purple/5 shadow-lg rounded-lg'
           : orderIdx % 2 === 0
@@ -701,7 +701,7 @@ export default function LineupPage() {
           <div className="w-full lg:w-[55%]">
             <div className="bg-white rounded-2xl shadow-sm border border-surface-container-highest overflow-hidden">
               {/* Header row */}
-              <div className="grid grid-cols-[auto_auto_auto_1fr_repeat(6,28px)] sm:grid-cols-[auto_auto_auto_1fr_repeat(6,36px)] lg:grid-cols-[auto_auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
+              <div className="grid grid-cols-[auto_auto_auto_1fr_repeat(6,36px)] sm:grid-cols-[auto_auto_auto_1fr_repeat(6,40px)] lg:grid-cols-[auto_auto_auto_1fr_repeat(6,48px)] items-center gap-0 bg-surface-container-low border-b border-surface-container-highest">
                 <div className="w-8" />
                 <div className="px-1 py-2">
                   <span className="text-[10px] font-semibold text-rockies-black/40 uppercase">#</span>
