@@ -152,4 +152,13 @@ export const INITIAL_GAMES: GameData[] = [
     location: 'away',
     status: 'upcoming',
   },
+  {
+    id: 'g16',
+    date: 'Tue, May 5',
+    time: '7:30 PM',
+    opponent: 'Orioles (Playoff)',
+    opponentFull: 'AAA-Citarella-Orioles',
+    location: 'away',
+    status: 'upcoming',
+  },
 ];

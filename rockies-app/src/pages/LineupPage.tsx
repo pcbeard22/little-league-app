@@ -432,23 +432,47 @@ export default function LineupPage() {
     });
   }, [players]);
 
+  // Sort batting order for display: active players first, absent at bottom
+  const displayOrder = useMemo(() => {
+    const active: number[] = [];
+    const absent: number[] = [];
+    for (const idx of battingOrder) {
+      if (absentPlayers.has(players[idx].number)) {
+        absent.push(idx);
+      } else {
+        active.push(idx);
+      }
+    }
+    return [...active, ...absent];
+  }, [battingOrder, absentPlayers, players]);
+
   const handleMoveUp = useCallback((orderIdx: number) => {
-    if (orderIdx <= 0) return;
+    if (orderIdx <= 0 || orderIdx >= displayOrder.length) return;
+    const playerA = displayOrder[orderIdx];
+    const playerB = displayOrder[orderIdx - 1];
     setBattingOrder((prev) => {
       const next = [...prev];
-      [next[orderIdx - 1], next[orderIdx]] = [next[orderIdx], next[orderIdx - 1]];
+      const aIdx = next.indexOf(playerA);
+      const bIdx = next.indexOf(playerB);
+      if (aIdx === -1 || bIdx === -1) return prev;
+      [next[aIdx], next[bIdx]] = [next[bIdx], next[aIdx]];
       return next;
     });
-  }, []);
+  }, [displayOrder]);
 
   const handleMoveDown = useCallback((orderIdx: number) => {
+    if (orderIdx < 0 || orderIdx >= displayOrder.length - 1) return;
+    const playerA = displayOrder[orderIdx];
+    const playerB = displayOrder[orderIdx + 1];
     setBattingOrder((prev) => {
-      if (orderIdx >= prev.length - 1) return prev;
       const next = [...prev];
-      [next[orderIdx], next[orderIdx + 1]] = [next[orderIdx + 1], next[orderIdx]];
+      const aIdx = next.indexOf(playerA);
+      const bIdx = next.indexOf(playerB);
+      if (aIdx === -1 || bIdx === -1) return prev;
+      [next[aIdx], next[bIdx]] = [next[bIdx], next[aIdx]];
       return next;
     });
-  }, []);
+  }, [displayOrder]);
 
   // Auto-suggest handler — checks previous game's pitchers + AI adjustments
   const handleAutoSuggest = useCallback(async () => {
@@ -602,20 +626,6 @@ export default function LineupPage() {
     setPositionsByInning(fullPositions);
     setAiLoading(false);
   }, [players, currentGameIndex, gameNoteEntries]);
-
-  // Sort batting order for display: active players first, absent at bottom
-  const displayOrder = useMemo(() => {
-    const active: number[] = [];
-    const absent: number[] = [];
-    for (const idx of battingOrder) {
-      if (absentPlayers.has(players[idx].number)) {
-        absent.push(idx);
-      } else {
-        active.push(idx);
-      }
-    }
-    return [...active, ...absent];
-  }, [battingOrder, absentPlayers, players]);
 
   const displaySortableIds = useMemo(
     () => displayOrder.map((idx) => `player-${players[idx].number}`),
