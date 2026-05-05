@@ -190,7 +190,7 @@ function SortablePlayerRow({
       </div>
 
       {/* Player name + tier + OBP */}
-      <div className={`flex items-center gap-1.5 px-2 py-2 min-w-0 ${isAbsent ? 'opacity-40' : ''}`}>
+      <div className={`flex items-center gap-1.5 pl-2 pr-0.5 lg:pr-2 py-2 min-w-0 ${isAbsent ? 'opacity-40' : ''}`}>
         <span
           className={`w-2 h-2 rounded-full shrink-0 ${TIER_DOT[p.tier]}`}
           title={p.tier}
@@ -658,7 +658,7 @@ export default function LineupPage() {
       />
 
       {/* Main content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 lg:py-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 py-4 lg:py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left column — baseball field (collapsible on mobile) */}
           <div className="w-full lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
@@ -707,7 +707,7 @@ export default function LineupPage() {
                   <span className="text-[10px] font-semibold text-rockies-black/40 uppercase">#</span>
                 </div>
                 <div className="w-5 lg:w-8" />
-                <div className="px-2 py-2">
+                <div className="pl-2 pr-0.5 lg:pr-2 py-2">
                   <span className="text-[10px] font-semibold text-rockies-black/40 uppercase">Player</span>
                 </div>
                 {Array.from({ length: TOTAL_INNINGS }, (_, i) => (
